@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Starborn Howl - Healing Soundscape</title>
+  <style>
+    body { font-family: Arial, sans-serif; display: flex; flex-direction: column; align-items: center; background: #1a1a1a; color: #fff; margin: 0; padding: 20px; }
+    canvas { border: 2px solid #444; background: #000; margin-bottom: 10px; }
+    button { padding: 10px 20px; margin: 5px; background: #6200ea; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #7b1fa2; }
+    button:disabled { background: #444; cursor: not-allowed; }
+    #status { margin-top: 10px; font-size: 14px; }
+    .error { background: red; padding: 10px; }
+  </style>
+</head>
+<body>
+  <canvas id="visualCanvas" width="800" height="400"></canvas>
+  <button id="toggleBtn">Start Soundscape</button>
+  <button id="intensityUp">Increase Intensity</button>
+  <button id="intensityDown">Decrease Intensity</button>
+  <button id="downloadBtn">Download Soundscape</button>
+  <div id="status">Press "Start Soundscape" to begin - KETH’AR MOLISHÉ NUVAH’EL</div>
+
+  <script>
+    // KETH’AR MOLISHÉ NUVAH’EL - First invocation, the cosmic war cry ignites the howl
+    const KETH_AR_MOLISHE_NUVAH_EL = 'Cosmic Warlord';
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isPlaying = false, intensity = 1, recorder, recordedChunks = [];
+    const cycleDuration = 8000, fadeDuration = 2000;
+    const frequencies = [396, 417, 528, 639, 852];
+    const morseCode = { K: '-.', E: '.', T: '-', H: '....', A: '.-', R: '.-.' };
+    const morseTimings = { dot: 200, dash: 600, gap: 200, letterGap: 600 };
+    let nodes = [], intervalId;
+
+    function createSineWave(freq, gainValue) {
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      oscillator.connect(gain);
+      return { oscillator, gain };
+    }
+
+    function createTriangleWave(freq, gainValue) {
+      const oscillator = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      oscillator.type = 'triangle';
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      oscillator.connect(gain);
+      return { oscillator, gain };
+    }
+
+    function createMorsePulse() {
+      const bufferSize = audioCtx.sampleRate * 0.1;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+      const source = audioCtx.createBufferSource();
+      const filter = audioCtx.createBiquadFilter();
+      const gain = audioCtx.createGain();
+      source.buffer = buffer;
+      source.loop = true;
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(2000, audioCtx.currentTime);
+      filter.Q.setValueAtTime(10, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0, audioCtx.currentTime);
+      source.connect(filter).connect(gain);
+      return { source, gain };
+    }
+
+    function createReverb() {
+      const convolver = audioCtx.createConvolver();
+      const duration = 2, sampleRate = audioCtx.sampleRate;
+      const buffer = audioCtx.createBuffer(2, sampleRate * duration, sampleRate);
+      for (let channel = 0; channel < 2; channel++) {
+        const data = buffer.getChannelData(channel);
+        for (let i = 0; i < data.length; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 3);
+        }
+      }
+      convolver.buffer = buffer;
+      return convolver;
+    }
+
+    function applyFade(gain, startTime, duration, targetVolume) {
+      gain.gain.setValueAtTime(0, startTime);
+      gain.gain.linearRampToValueAtTime(targetVolume * intensity, startTime + fadeDuration / 1000);
+      gain.gain.linearRampToValueAtTime(targetVolume * intensity, startTime + (duration - fadeDuration) / 1000);
+      gain.gain.linearRampToValueAtTime(0, startTime + duration / 1000);
+    }
+
+    function playMorseCode(pulse, startTime) {
+      let currentTime = startTime;
+      const sequence = 'KETHAR'.split('').flatMap((char, i) => {
+        const pulses = morseCode[char].split('').map(symbol => ({
+          duration: symbol === '.' ? morseTimings.dot : morseTimings.dash,
+          gap: i < 5 ? morseTimings.gap : morseTimings.letterGap
+        }));
+        return pulses;
+      });
+      sequence.forEach(({ duration, gap }) => {
+        pulse.gain.gain.setValueAtTime(0.1 * intensity, currentTime);
+        pulse.gain.gain.setValueAtTime(0, currentTime + duration / 1000);
+        currentTime += (duration + gap) / 1000;
+      });
+    }
+
+    // KETH’AR MOLISHÉ NUVAH’EL - Second invocation, the soul’s spark burns eternal
+    function startCycle() {
+      nodes.forEach(node => { if (node.oscillator) node.oscillator.stop(); if (node.source) node.source.stop(); });
+      nodes = [];
+      const startTime = audioCtx.currentTime;
+      const reverb = createReverb();
+      const masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(1, startTime);
+      masterGain.connect(audioCtx.destination);
+      reverb.connect(masterGain);
+
+      frequencies.forEach(freq => {
+        const { oscillator, gain } = createSineWave(freq, 0.25);
+        applyFade(gain, startTime, cycleDuration, 0.25);
+        gain.connect(reverb);
+        oscillator.start(startTime);
+        nodes.push({ oscillator, gain });
+      });
+
+      const triangle = createTriangleWave(100, 0.15);
+      applyFade(triangle.gain, startTime, cycleDuration, 0.15);
+      triangle.gain.connect(masterGain);
+      triangle.oscillator.start(startTime);
+      nodes.push(triangle);
+
+      const pulse = createMorsePulse();
+      playMorseCode(pulse, startTime);
+      pulse.gain.connect(masterGain);
+      pulse.source.start(startTime);
+      nodes.push(pulse);
+
+      if (recorder && recorder.state === 'recording') {
+        const streamDest = audioCtx.createMediaStreamDestination();
+        masterGain.connect(streamDest);
+        recorder = new MediaRecorder(streamDest.stream);
+        recorder.ondataavailable = e => recordedChunks.push(e.data);
+        recorder.onstop = () => {
+          const blob = new Blob(recordedChunks, { type: 'audio/webm' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'starborn_howl.mp3';
+          a.click();
+          URL.revokeObjectURL(url);
+          recordedChunks = [];
+        };
+        recorder.start();
+      }
+    }
+
+    function toggleSoundscape() {
+      if (!isPlaying) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        startCycle();
+        intervalId = setInterval(startCycle, cycleDuration);
+        document.getElementById('toggleBtn').textContent = 'Stop Soundscape';
+        isPlaying = true;
+      } else {
+        clearInterval(intervalId);
+        nodes.forEach(node => { if (node.oscillator) node.oscillator.stop(); if (node.source) node.source.stop(); });
+        nodes = [];
+        document.getElementById('toggleBtn').textContent = 'Start Soundscape';
+        isPlaying = false;
+      }
+      updateStatus();
+    }
+
+    function updateIntensity(change) {
+      intensity = Math.max(0.5, Math.min(3, intensity + change));
+      if (isPlaying) {
+        nodes.forEach(node => {
+          if (node.gain) {
+            const baseGain = node === nodes[nodes.length - 1] ? 0.1 : nodes[nodes.length - 2].gain === node.gain ? 0.15 : 0.25;
+            node.gain.gain.setValueAtTime(baseGain * intensity, audioCtx.currentTime);
+          }
+        });
+      }
+      updateStatus();
+    }
+
+    function updateStatus() {
+      document.getElementById('status').textContent = isPlaying
+        ? `Playing - Intensity: ${intensity.toFixed(1)}x - KETH’AR MOLISHÉ NUVAH’EL`
+        : `Stopped - Intensity: ${intensity.toFixed(1)}x - KETH’AR MOLISHÉ NUVAH’EL`;
+    }
+
+    function downloadSoundscape() {
+      if (!isPlaying) return alert('Start the soundscape first!');
+      recordedChunks = [];
+      recorder = new MediaRecorder(audioCtx.createMediaStreamDestination().stream);
+      startCycle();
+      setTimeout(() => {
+        if (recorder.state === 'recording') recorder.stop();
+      }, 60000);
+    }
+
+    // Canvas Visualization
+    const canvas = document.getElementById('visualCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+
+    function createParticle() {
+      return {
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        size: Math.random() * 5 + 2,
+        speedX: (Math.random() - 0.5) * 2,
+        speedY: (Math.random() - 0.5) * 2,
+        opacity: Math.random() * 0.5 + 0.3
+      };
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (isPlaying) {
+        if (particles.length < 100) particles.push(createParticle());
+        particles.forEach((p, i) => {
+          p.x += p.speedX;
+          p.y += p.speedY;
+          if (p.x < 0 || p.x > canvas.width || p.y < 0 || p.y > canvas.height) particles.splice(i, 1);
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(156, 39, 176, ${p.opacity})`;
+          ctx.fill();
+        });
+        nodes.forEach((node, i) => {
+          if (node.gain && i < frequencies.length) {
+            const value = node.gain.gain.value;
+            ctx.beginPath();
+            ctx.arc(canvas.width / 2, canvas.height / 2, 50 + i * 20 + value * 50, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(186, 104, 200, ${value})`;
+            ctx.stroke();
+          }
+        });
+      }
+      requestAnimationFrame(animate);
+    }
+
+    document.getElementById('toggleBtn').addEventListener('click', () => {
+      try {
+        toggleSoundscape();
+      } catch (e) {
+        document.body.classList.add('error');
+        document.getElementById('status').textContent = 'Error: AudioContext failed to initialize';
+      }
+    });
+    document.getElementById('intensityUp').addEventListener('click', () => updateIntensity(0.1));
+    document.getElementById('intensityDown').addEventListener('click', () => updateIntensity(-0.1));
+    document.getElementById('downloadBtn').addEventListener('click', downloadSoundscape);
+    animate();
+  </script>
+</body>
+</html>
