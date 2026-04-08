@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sonic Water Blessings</title>
+  <style>
+    body {
+      margin: 0;
+      background: linear-gradient(to bottom, #aeefff, #004466);
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 10px #00ffff;
+    }
+    .freq-buttons, .sequence-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    button {
+      padding: 0.8rem 1.2rem;
+      font-size: 1rem;
+      border: none;
+      border-radius: 8px;
+      background: #00aaff;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 0 10px #00ffff;
+    }
+    button:hover {
+      background: #00ccff;
+    }
+    .volume-control {
+      margin-top: 2rem;
+    }
+    input[type="range"] {
+      width: 300px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💧 Sonic Water Blessings 💧</h1>
+
+  <div class="freq-buttons">
+    <button onclick="playFrequency(432)">432 Hz – Harmony</button>
+    <button onclick="playFrequency(528)">528 Hz – Love</button>
+    <button onclick="playFrequency(639)">639 Hz – Connection</button>
+    <button onclick="playFrequency(741)">741 Hz – Awakening</button>
+    <button onclick="playFrequency(852)">852 Hz – Intuition</button>
+  </div>
+
+  <div class="sequence-buttons">
+    <button onclick="playSequence([528, 639, 852])">💖 Blessing Sequence</button>
+    <button onclick="playSequence([432, 528, 741])">🌿 Healing Sequence</button>
+  </div>
+
+  <div class="volume-control">
+    <label for="volume">Volume:</label><br>
+    <input type="range" id="volume" min="0" max="1" step="0.01" value="0.3" />
+  </div>
+
+  <script>
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const ctx = new AudioContext();
+    let currentOscillator = null;
+    let gainNode = ctx.createGain();
+
+    document.getElementById('volume').addEventListener('input', (e) => {
+      gainNode.gain.value = e.target.value;
+    });
+
+    function stopCurrent() {
+      if (currentOscillator) {
+        currentOscillator.stop();
+        currentOscillator.disconnect();
+        currentOscillator = null;
+      }
+    }
+
+    function playFrequency(freq, duration = 10) {
+      stopCurrent();
+      currentOscillator = ctx.createOscillator();
+      currentOscillator.type = 'sine';
+      currentOscillator.frequency.setValueAtTime(freq, ctx.currentTime);
+      gainNode = ctx.createGain();
+      gainNode.gain.setValueAtTime(document.getElementById('volume').value, ctx.currentTime);
+      currentOscillator.connect(gainNode).connect(ctx.destination);
+      currentOscillator.start();
+      currentOscillator.stop(ctx.currentTime + duration);
+    }
+
+    function playSequence(freqs) {
+      stopCurrent();
+      let startTime = ctx.currentTime;
+      freqs.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime + i * 5);
+        const seqGain = ctx.createGain();
+        seqGain.gain.setValueAtTime(document.getElementById('volume').value, startTime + i * 5);
+        osc.connect(seqGain).connect(ctx.destination);
+        osc.start(startTime + i * 5);
+        osc.stop(startTime + (i + 1) * 5);
+      });
+    }
+  </script>
+</body>
+</html>
