@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Character Counter & Text Transformer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 25px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.85em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Courier New', monospace;
+            resize: vertical;
+            margin-bottom: 20px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+
+        .output-box {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            background: #f8f9fa;
+            margin-bottom: 15px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            font-size: 20px;
+            line-height: 1.6;
+        }
+
+        .slider-container {
+            margin-bottom: 25px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .slider-value {
+            color: #667eea;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            background: #764ba2;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #667eea;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .copied-msg {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .copied-msg.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Character Counter & Text Transformer</h1>
+        
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-label">Characters</div>
+                <div class="stat-value" id="charCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Characters (no spaces)</div>
+                <div class="stat-value" id="charNoSpace">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Words</div>
+                <div class="stat-value" id="wordCount">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Lines</div>
+                <div class="stat-value" id="lineCount">0</div>
+            </div>
+        </div>
+
+        <textarea 
+            id="inputText" 
+            placeholder="Enter or paste your text here (up to 10,000 characters)..."
+            maxlength="10000"></textarea>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>🌀 Zalgo Effect</span>
+                <span class="slider-value" id="zalgoValue">0</span>
+            </div>
+            <input type="range" id="zalgoSlider" min="0" max="10" value="0">
+        </div>
+
+        <div class="slider-container">
+            <div class="slider-label">
+                <span>✍️ Calligraphy Style</span>
+                <span class="slider-value" id="calligraphyValue">0</span>
+            </div>
+            <input type="range" id="calligraphySlider" min="0" max="10" value="0">
+        </div>
+
+        <div class="output-box" id="outputText">Your transformed text will appear here...</div>
+
+        <button class="btn" id="copyBtn">📋 Copy Transformed Text</button>
+    </div>
+
+    <div class="copied-msg" id="copiedMsg">✓ Copied to clipboard!</div>
+
+    <script>
+        const inputText = document.getElementById('inputText');
+        const outputText = document.getElementById('outputText');
+        const charCount = document.getElementById('charCount');
+        const charNoSpace = document.getElementById('charNoSpace');
+        const wordCount = document.getElementById('wordCount');
+        const lineCount = document.getElementById('lineCount');
+        const zalgoSlider = document.getElementById('zalgoSlider');
+        const calligraphySlider = document.getElementById('calligraphySlider');
+        const zalgoValue = document.getElementById('zalgoValue');
+        const calligraphyValue = document.getElementById('calligraphyValue');
+        const copyBtn = document.getElementById('copyBtn');
+        const copiedMsg = document.getElementById('copiedMsg');
+
+        const zalgoChars = [
+            '\u0300', '\u0301', '\u0302', '\u0303', '\u0304', '\u0305', '\u0306', '\u0307',
+            '\u0308', '\u0309', '\u030A', '\u030B', '\u030C', '\u030D', '\u030E', '\u030F',
+            '\u0310', '\u0311', '\u0312', '\u0313', '\u0314', '\u0315', '\u0316', '\u0317',
+            '\u0318', '\u0319', '\u031A', '\u031B', '\u031C', '\u031D', '\u031E', '\u031F',
+            '\u0320', '\u0321', '\u0322', '\u0323', '\u0324', '\u0325', '\u0326', '\u0327',
+            '\u0328', '\u0329', '\u032A', '\u032B', '\u032C', '\u032D', '\u032E', '\u032F',
+            '\u0330', '\u0331', '\u0332', '\u0333', '\u0334', '\u0335', '\u0336', '\u0337',
+            '\u0338', '\u0339', '\u033A', '\u033B', '\u033C', '\u033D', '\u033E', '\u033F'
+        ];
+
+        const calligraphyMap = {
+            'a': '𝓪', 'b': '𝓫', 'c': '𝓬', 'd': '𝓭', 'e': '𝓮', 'f': '𝓯', 'g': '𝓰',
+            'h': '𝓱', 'i': '𝓲', 'j': '𝓳', 'k': '𝓴', 'l': '𝓵', 'm': '𝓶', 'n': '𝓷',
+            'o': '𝓸', 'p': '𝓹', 'q': '𝓺', 'r': '𝓻', 's': '𝓼', 't': '𝓽', 'u': '𝓾',
+            'v': '𝓿', 'w': '𝔀', 'x': '𝔁', 'y': '𝔂', 'z': '𝔃',
+            'A': '𝓐', 'B': '𝓑', 'C': '𝓒', 'D': '𝓓', 'E': '𝓔', 'F': '𝓕', 'G': '𝓖',
+            'H': '𝓗', 'I': '𝓘', 'J': '𝓙', 'K': '𝓚', 'L': '𝓛', 'M': '𝓜', 'N': '𝓝',
+            'O': '𝓞', 'P': '𝓟', 'Q': '𝓠', 'R': '𝓡', 'S': '𝓢', 'T': '𝓣', 'U': '𝓤',
+            'V': '𝓥', 'W': '𝓦', 'X': '𝓧', 'Y': '𝓨', 'Z': '𝓩'
+        };
+
+        function updateStats() {
+            const text = inputText.value;
+            charCount.textContent = text.length;
+            charNoSpace.textContent = text.replace(/\s/g, '').length;
+            wordCount.textContent = text.trim() ? text.trim().split(/\s+/).length : 0;
+            lineCount.textContent = text ? text.split('\n').length : 0;
+        }
+
+        function applyZalgo(text, intensity) {
+            if (intensity === 0) return text;
+            
+            return text.split('').map(char => {
+                if (char.match(/\s/)) return char;
+                
+                let result = char;
+                const numMarks = Math.ceil(intensity * 0.5);
+                
+                for (let i = 0; i < numMarks; i++) {
+                    result += zalgoChars[Math.floor(Math.random() * zalgoChars.length)];
+                }
+                
+                return result;
+            }).join('');
+        }
+
+        function applyCalligraphy(text, intensity) {
+            if (intensity === 0) return text;
+            
+            const threshold = intensity / 10;
+            
+            return text.split('').map(char => {
+                if (Math.random() < threshold && calligraphyMap[char]) {
+                    return calligraphyMap[char];
+                }
+                return char;
+            }).join('');
+        }
+
+        function transformText() {
+            let text = inputText.value;
+            
+            if (!text) {
+                outputText.textContent = 'Your transformed text will appear here...';
+                return;
+            }
+
+            const zalgoLevel = parseInt(zalgoSlider.value);
+            const calligraphyLevel = parseInt(calligraphySlider.value);
+
+            if (calligraphyLevel > 0) {
+                text = applyCalligraphy(text, calligraphyLevel);
+            }
+            
+            if (zalgoLevel > 0) {
+                text = applyZalgo(text, zalgoLevel);
+            }
+
+            outputText.textContent = text;
+        }
+
+        inputText.addEventListener('input', () => {
+            updateStats();
+            transformText();
+        });
+
+        zalgoSlider.addEventListener('input', (e) => {
+            zalgoValue.textContent = e.target.value;
+            transformText();
+        });
+
+        calligraphySlider.addEventListener('input', (e) => {
+            calligraphyValue.textContent = e.target.value;
+            transformText();
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const text = outputText.textContent;
+            
+            if (text && text !== 'Your transformed text will appear here...') {
+                navigator.clipboard.writeText(text).then(() => {
+                    copiedMsg.classList.add('show');
+                    setTimeout(() => {
+                        copiedMsg.classList.remove('show');
+                    }, 2000);
+                });
+            }
+        });
+
+        updateStats();
+    </script>
+</body>
+</html>
