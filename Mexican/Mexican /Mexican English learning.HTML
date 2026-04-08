@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Libro de Español Mexicano</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 30%, #CD853F 70%, #DEB887 100%);
+            overflow: hidden;
+            font-family: 'Serif', serif;
+            touch-action: none;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .mesa {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            height: 60%;
+            background: linear-gradient(45deg, #8B4513 0%, #A0522D 30%, #CD853F 70%, #D2B48C 100%);
+            border-radius: 50% 50% 0 0;
+            box-shadow: 
+                inset 0 20px 40px rgba(0,0,0,0.2),
+                0 -10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .decorations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .cactus {
+            position: absolute;
+            bottom: 70%;
+            right: 10%;
+            width: 30px;
+            height: 80px;
+            background: linear-gradient(45deg, #228B22, #32CD32);
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .cactus::before {
+            content: '';
+            position: absolute;
+            left: -15px;
+            top: 20px;
+            width: 20px;
+            height: 30px;
+            background: linear-gradient(45deg, #228B22, #32CD32);
+            border-radius: 10px;
+        }
+        
+        .sombrero {
+            position: absolute;
+            bottom: 75%;
+            left: 15%;
+            width: 60px;
+            height: 20px;
+            background: linear-gradient(45deg, #8B4513, #D2691E);
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        .sombrero::before {
+            content: '';
+            position: absolute;
+            left: 50%;
+            top: -15px;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 20px;
+            background: linear-gradient(45deg, #8B4513, #D2691E);
+            border-radius: 50% 50% 30% 30%;
+        }
+        
+        .papel-picado {
+            position: absolute;
+            top: 5%;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: repeating-linear-gradient(
+                90deg,
+                #FF69B4 0px,
+                #FF69B4 30px,
+                #FFD700 30px,
+                #FFD700 60px,
+                #00CED1 60px,
+                #00CED1 90px,
+                #FF6347 90px,
+                #FF6347 120px
+            );
+            border-bottom: 10px solid transparent;
+            border-image: repeating-linear-gradient(
+                90deg,
+                #FF69B4 0px,
+                #FF69B4 15px,
+                transparent 15px,
+                transparent 20px
+            ) 10;
+        }
+        
+        .book-container {
+            position: relative;
+            width: 280px;
+            height: 200px;
+            perspective: 1000px;
+            z-index: 10;
+        }
+        
+        .book {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        
+        .book.open {
+            transform: rotateY(-15deg);
+        }
+        
+        .book-cover {
+            position: absolute;
+            width: 280px;
+            height: 200px;
+            background: linear-gradient(45deg, #8B0000 0%, #DC143C 30%, #B22222 70%, #A0522D 100%);
+            border: 3px solid #FFD700;
+            border-radius: 8px;
+            box-shadow: 
+                0 10px 30px rgba(0,0,0,0.4),
+                inset 0 0 20px rgba(255,215,0,0.2);
+            transform-origin: left center;
+            transition: transform 0.8s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            backface-visibility: hidden;
+        }
+        
+        .book.open .book-cover {
+            transform: rotateY(-180deg);
+        }
+        
+        .book-title {
+            font-size: 18px;
+            color: #FFD700;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .book-subtitle {
+            font-size: 12px;
+            color: #FFA500;
+            text-align: center;
+            font-style: italic;
+        }
+        
+        .book-pages {
+            position: absolute;
+            width: 280px;
+            height: 200px;
+            background: #F5F5DC;
+            border: 2px solid #8B4513;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.5s ease 0.3s;
+            display: flex;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .book.open .book-pages {
+            opacity: 1;
+        }
+        
+        .page-left, .page-right {
+            width: 50%;
+            height: 100%;
+            padding: 15px 10px;
+            box-sizing: border-box;
+            overflow-y: auto;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+        
+        .page-left {
+            background: linear-gradient(135deg, #F5F5DC 0%, #FFFACD 100%);
+            border-right: 1px solid #8B4513;
+            color: #8B0000;
+        }
+        
+        .page-right {
+            background: linear-gradient(135deg, #FFFACD 0%, #F5F5DC 100%);
+            color: #006400;
+        }
+        
+        .page-header {
+            text-align: center;
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #8B0000;
+            border-bottom: 1px solid #8B4513;
+            padding-bottom: 5px;
+        }
+        
+        .word-entry {
+            margin-bottom: 8px;
+            padding: 3px;
+            border-radius: 3px;
+        }
+        
+        .spanish-word {
+            font-weight: bold;
+            color: #DC143C;
+            font-size: 11px;
+        }
+        
+        .english-word {
+            font-weight: bold;
+            color: #006400;
+            font-size: 11px;
+        }
+        
+        .pronunciation {
+            font-style: italic;
+            color: #4682B4;
+            font-size: 9px;
+            margin-top: 2px;
+        }
+        
+        .category {
+            background: rgba(255, 215, 0, 0.2);
+            padding: 2px 4px;
+            margin: 8px 0 5px 0;
+            border-radius: 3px;
+            font-weight: bold;
+            color: #8B4513;
+            font-size: 10px;
+            text-align: center;
+        }
+        
+        .navigation {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            z-index: 15;
+        }
+        
+        .nav-btn {
+            background: linear-gradient(45deg, #8B0000, #DC143C);
+            border: 2px solid #FFD700;
+            border-radius: 20px;
+            color: #FFD700;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            touch-action: manipulation;
+        }
+        
+        .nav-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        }
+        
+        .instructions {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            color: #FFD700;
+            font-size: 14px;
+            opacity: 0.9;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 5;
+            pointer-events: none;
+        }
+        
+        .instructions.hidden {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        
+        .marigold {
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background: radial-gradient(circle, #FFD700 30%, #FFA500 70%);
+            border-radius: 50%;
+            bottom: 65%;
+            animation: sway 3s ease-in-out infinite;
+        }
+        
+        .marigold1 { left: 8%; animation-delay: 0s; }
+        .marigold2 { right: 8%; animation-delay: 1s; }
+        .marigold3 { left: 25%; bottom: 68%; animation-delay: 2s; }
+        
+        @keyframes sway {
+            0%, 100% { transform: rotate(-5deg) scale(1); }
+            50% { transform: rotate(5deg) scale(1.1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="mesa"></div>
+    
+    <div class="decorations">
+        <div class="papel-picado"></div>
+        <div class="cactus"></div>
+        <div class="sombrero"></div>
+        <div class="marigold marigold1"></div>
+        <div class="marigold marigold2"></div>
+        <div class="marigold marigold3"></div>
+    </div>
+    
+    <div class="instructions" id="instructions">
+        Swipe left to open the book • Learn beautiful Mexican Spanish
+    </div>
+    
+    <div class="book-container">
+        <div class="book" id="book">
+            <div class="book-cover">
+                <div class="book-title">ESPAÑOL MEXICANO</div>
+                <div class="book-subtitle">Diccionario Cultural</div>
+            </div>
+            
+            <div class="book-pages">
+                <div class="page-left" id="pageLeft">
+                    <div class="page-header">Español Mexicano</div>
+                    <div id="spanishContent"></div>
+                </div>
+                
+                <div class="page-right" id="pageRight">
+                    <div class="page-header">English & Pronunciation</div>
+                    <div id="englishContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="navigation">
+        <button class="nav-btn" id="prevBtn">← Anterior</button>
+        <button class="nav-btn" id="nextBtn">Siguiente →</button>
+    </div>
+
+    <script>
+        const book = document.getElementById('book');
+        const instructions = document.getElementById('instructions');
+        const spanishContent = document.getElementById('spanishContent');
+        const englishContent = document.getElementById('englishContent');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        
+        let isOpen = false;
+        let currentPage = 0;
+        let startX = null;
+        
+        // Comprehensive Mexican Spanish vocabulary
+        const vocabulary = [
+            {
+                category: "Saludos y Cortesía",
+                words: [
+                    { spanish: "¡Órale!", english: "Wow! / Come on!", pronunciation: "OH-rah-leh" },
+                    { spanish: "¿Qué onda?", english: "What's up?", pronunciation: "keh OHN-dah" },
+                    { spanish: "¿Cómo estás?", english: "How are you?", pronunciation: "KOH-moh ehs-TAHS" },
+                    { spanish: "Muchas gracias", english: "Thank you very much", pronunciation: "MOO-chahs GRAH-see-ahs" },
+                    { spanish: "De nada", english: "You're welcome", pronunciation: "deh NAH-dah" },
+                    { spanish: "Con permiso", english: "Excuse me", pronunciation: "kohn pehr-MEE-soh" },
+                    { spanish: "¡Provecho!", english: "Enjoy your meal!", pronunciation: "proh-VEH-choh" }
+                ]
+            },
+            {
+                category: "Familia",
+                words: [
+                    { spanish: "Mamá", english: "Mom", pronunciation: "mah-MAH" },
+                    { spanish: "Papá", english: "Dad", pronunciation: "pah-PAH" },
+                    { spanish: "Abuelita", english: "Grandma", pronunciation: "ah-bweh-LEE-tah" },
+                    { spanish: "Abuelito", english: "Grandpa", pronunciation: "ah-bweh-LEE-toh" },
+                    { spanish: "Hermano", english: "Brother", pronunciation: "ehr-MAH-noh" },
+                    { spanish: "Hermana", english: "Sister", pronunciation: "ehr-MAH-nah" },
+                    { spanish: "Primo", english: "Cousin (male)", pronunciation: "PREE-moh" },
+                    { spanish: "Prima", english: "Cousin (female)", pronunciation: "PREE-mah" }
+                ]
+            },
+            {
+                category: "Comida Mexicana",
+                words: [
+                    { spanish: "Tacos", english: "Tacos", pronunciation: "TAH-kohs" },
+                    { spanish: "Quesadillas", english: "Cheese tortillas", pronunciation: "keh-sah-DEE-yahs" },
+                    { spanish: "Pozole", english: "Hominy soup", pronunciation: "poh-SOH-leh" },
+                    { spanish: "Mole", english: "Complex sauce", pronunciation: "MOH-leh" },
+                    { spanish: "Elote", english: "Corn on the cob", pronunciation: "eh-LOH-teh" },
+                    { spanish: "Torta", english: "Mexican sandwich", pronunciation: "TOHR-tah" },
+                    { spanish: "Chilaquiles", english: "Tortilla chips in sauce", pronunciation: "chee-lah-KEE-lehs" },
+                    { spanish: "Tamales", english: "Corn dough wraps", pronunciation: "tah-MAH-lehs" }
+                ]
+            },
+            {
+                category: "Expresiones Mexicanas",
+                words: [
+                    { spanish: "¡Ándale!", english: "Come on! / Hurry up!", pronunciation: "AHN-dah-leh" },
+                    { spanish: "¡No manches!", english: "No way! / You're kidding!", pronunciation: "noh MAHN-chehs" },
+                    { spanish: "Está padrísimo", english: "It's awesome", pronunciation: "ehs-TAH pah-DREE-see-moh" },
+                    { spanish: "¡Qué padre!", english: "How cool!", pronunciation: "keh PAH-dreh" },
+                    { spanish: "Está cabrón", english: "It's tough/difficult", pronunciation: "ehs-TAH kah-BROHN" },
+                    { spanish: "¡Híjole!", english: "Wow! / Oh no!", pronunciation: "EE-hoh-leh" },
+                    { spanish: "¡Aguas!", english: "Watch out!", pronunciation: "AH-gwahs" }
+                ]
+            },
+            {
+                category: "Colores y Números",
+                words: [
+                    { spanish: "Rojo", english: "Red", pronunciation: "ROH-hoh" },
+                    { spanish: "Verde", english: "Green", pronunciation: "VEHR-deh" },
+                    { spanish: "Blanco", english: "White", pronunciation: "BLAHN-koh" },
+                    { spanish: "Uno", english: "One", pronunciation: "OO-noh" },
+                    { spanish: "Dos", english: "Two", pronunciation: "dohs" },
+                    { spanish: "Tres", english: "Three", pronunciation: "trehs" },
+                    { spanish: "Diez", english: "Ten", pronunciation: "dee-EHS" },
+                    { spanish: "Cien", english: "One hundred", pronunciation: "see-EHN" }
+                ]
+            },
+            {
+                category: "Casa y Vida Diaria",
+                words: [
+                    { spanish: "Casa", english: "House", pronunciation: "KAH-sah" },
+                    { spanish: "Cocina", english: "Kitchen", pronunciation: "koh-SEE-nah" },
+                    { spanish: "Baño", english: "Bathroom", pronunciation: "BAH-nyoh" },
+                    { spanish: "Trabajo", english: "Work", pronunciation: "trah-BAH-hoh" },
+                    { spanish: "Escuela", english: "School", pronunciation: "ehs-KWEH-lah" },
+                    { spanish: "Mercado", english: "Market", pronunciation: "mehr-KAH-doh" },
+                    { spanish: "Tienda", english: "Store", pronunciation: "tee-EHN-dah" },
+                    { spanish: "Dinero", english: "Money", pronunciation: "dee-NEH-roh" }
+                ]
+            }
+        ];
+        
+        function renderPage(pageIndex) {
+            if (pageIndex >= vocabulary.length) return;
+            
+            const category = vocabulary[pageIndex];
+            
+            let spanishHTML = `<div class="category">${category.category}</div>`;
+            let englishHTML = `<div class="category">Translations</div>`;
+            
+            category.words.forEach(word => {
+                spanishHTML += `<div class="word-entry"><span class="spanish-word">${word.spanish}</span></div>`;
+                englishHTML += `<div class="word-entry">
+                    <span class="english-word">${word.english}</span>
+                    <div class="pronunciation">[${word.pronunciation}]</div>
+                </div>`;
+            });
+            
+            spanishContent.innerHTML = spanishHTML;
+            englishContent.innerHTML = englishHTML;
+        }
+        
+        function openBook() {
+            if (!isOpen) {
+                book.classList.add('open');
+                instructions.classList.add('hidden');
+                isOpen = true;
+                renderPage(currentPage);
+            }
+        }
+        
+        function closeBook() {
+            if (isOpen) {
+                book.classList.remove('open');
+                instructions.classList.remove('hidden');
+                isOpen = false;
+            }
+        }
+        
+        function nextPage() {
+            if (currentPage < vocabulary.length - 1) {
+                currentPage++;
+                renderPage(currentPage);
+            }
+        }
+        
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage(currentPage);
+            } else {
+                closeBook();
+            }
+        }
+        
+        // Touch events
+        document.addEventListener('touchstart', (e) => {
+            startX = e.touches[0].clientX;
+        });
+        
+        document.addEventListener('touchend', (e) => {
+            if (!startX) return;
+            
+            const endX = e.changedTouches[0].clientX;
+            const deltaX = endX - startX;
+            
+            if (Math.abs(deltaX) > 50) {
+                if (deltaX > 0) { // Swipe right
+                    if (isOpen) {
+                        prevPage();
+                    }
+                } else { // Swipe left
+                    if (!isOpen) {
+                        openBook();
+                    } else {
+                        nextPage();
+                    }
+                }
+            }
+            
+            startX = null;
+        });
+        
+        // Button events
+        prevBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            prevPage();
+        });
+        
+        nextBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            nextPage();
+        });
+        
+        // Click events for desktop
+        prevBtn.addEventListener('click', prevPage);
+        nextBtn.addEventListener('click', nextPage);
+        
+        book.addEventListener('click', () => {
+            if (!isOpen) openBook();
+        });
+        
+        // Initialize
+        renderPage(currentPage);
+    </script>
+</body>
+</html>
