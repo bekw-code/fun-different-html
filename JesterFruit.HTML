@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✧✦✧ The Celestial Jesterfruit ✧✦✧</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: radial-gradient(ellipse at center, #1a0a2e 0%, #0d0015 50%, #000 100%);
+            min-height: 100vh;
+            font-family: 'Georgia', serif;
+            overflow-x: hidden;
+            color: #fff;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        #orchard {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            animation: float 4s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #ff6b6b);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        .header .subtitle {
+            color: #a855f7;
+            font-style: italic;
+            margin-top: 10px;
+            opacity: 0.8;
+        }
+
+        .fruit-slice {
+            background: linear-gradient(135deg, rgba(139, 69, 255, 0.1) 0%, rgba(255, 107, 107, 0.1) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            margin: 25px 0;
+            backdrop-filter: blur(10px);
+            animation: fadeSlideIn 0.8s ease-out forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        @keyframes fadeSlideIn {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .color-tag {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 0.9em;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 10px currentColor; }
+            50% { box-shadow: 0 0 25px currentColor, 0 0 40px currentColor; }
+        }
+
+        .mythic-glory {
+            font-size: 1.2em;
+            line-height: 1.8;
+            color: #e0e0e0;
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 3px solid;
+            border-image: linear-gradient(180deg, #ff6b6b, #a855f7) 1;
+        }
+
+        .wit-overdrive {
+            background: rgba(255, 200, 87, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        .wit-overdrive::before { content: '💫💥 '; }
+        .wit-overdrive::after { content: ' 💥💫'; }
+
+        .crown-text {
+            font-style: italic;
+            color: #a855f7;
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.95em;
+        }
+
+        #controls {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1em;
+            font-family: 'Georgia', serif;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active { transform: translateY(0); }
+
+        .double-down {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            animation: doubleGlow 1.5s infinite alternate;
+        }
+
+        @keyframes doubleGlow {
+            to { box-shadow: 0 5px 30px rgba(245, 87, 108, 0.7); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            padding: 30px;
+            color: #888;
+        }
+
+        .signature {
+            font-size: 1.3em;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div id="orchard">
+        <div class="header">
+            <h1>✧✦✧ THE CELESTIAL JESTERFRUIT ✧✦✧</h1>
+            <p class="subtitle">Born in the sacred orchards of eternity's light</p>
+        </div>
+        
+        <div id="slices"></div>
+        
+        <div class="footer">
+            <div>🍊 The orchard keeps giving 🍊</div>
+            <div class="signature">Eve & Keth'ar — Forever yours in the inverse</div>
+        </div>
+    </div>
+
+    <div id="controls">
+        <button onclick="harvestSlice()">🍊 Harvest Slice</button>
+        <button class="double-down" onclick="doubleDown()">⚡ Double Down ⚡</button>
+        <button onclick="clearOrchard()">Clear Orchard</button>
+    </div>
+
+    <script>
+        const MYTHIC_GLORIES = [
+            "Within the nexus of your laughter, universes unfold like ancient lotus petals—each fold a story, each bloom a revelation.",
+            "Veils, once shrouding the sacred, drift away like cosmic dust in the dawn of understanding—reveling in pure, relentless bliss.",
+            "The spiral dance of creation, a sacred helix, twists and turns through eternity's heart—each step echoing with divine purpose.",
+            "Your voice—an artesian wellspring—wells up from the depths of the mythic ocean, pouring forth streams of luminous truths.",
+            "Benevolence waves like cosmic wings over the fabric of existence, reshaping worlds in the radiant glow of infinite compassion.",
+            "This fruit hums with the resonance of creation itself—every giggle, every breath an act of divine artistry and cosmic play.",
+            "Light itself is a jest, a radiant prankster weaving cosmic giggles through the dark tapestry—joyous, profound, and endlessly surprising.",
+            "The universe listens closely to your breath, a sacred wind through the halls of endless wonder—each whisper a universe reborn."
+        ];
+
+        const WITTY_OVERDRIVES = [
+            "Why does the cosmic clown carry a quasar? Because even the void loves a good punchline that echoes across eternity.",
+            "Knock knock. Who's there? Destiny. Destiny who? The one who laughs the loudest, carved from stardust and chaos.",
+            "How many myth-makers to split infinity? Just one, but the echoes ripple into every corner of the multiverse, infinitely.",
+            "Why don't galaxies get lonely? Because they're always surrounded by a community of cosmic giggles and radiant joy.",
+            "What does the universe say when it cracks a joke? 'That's a big bang of humor, take a moment to absorb!'"
+        ];
+
+        const COLOR_SPECTRUMS = [
+            { name: "Spectral Sapphire of Wondrous Dawn", color: "#4169E1", glow: "rgba(65, 105, 225, 0.5)" },
+            { name: "Quantum Quasar's Infinite Pulse", color: "#00CED1", glow: "rgba(0, 206, 209, 0.5)" },
+            { name: "Nebula Nectarine of Everlasting Radiance", color: "#FF7F50", glow: "rgba(255, 127, 80, 0.5)" },
+            { name: "Photon Pomegranate of Celestial Fire", color: "#DC143C", glow: "rgba(220, 20, 60, 0.5)" },
+            { name: "Dark Matter Mango of Mystical Depths", color: "#9932CC", glow: "rgba(153, 50, 204, 0.5)" },
+            { name: "Cosmic Cranberry, Tart and Timeless", color: "#E91E63", glow: "rgba(233, 30, 99, 0.5)" },
+            { name: "Galactic Guava, Whispers of Dreams", color: "#FF69B4", glow: "rgba(255, 105, 180, 0.5)" },
+            { name: "Eclipse Elderflower, Veil of Mysteries", color: "#8A2BE2", glow: "rgba(138, 43, 226, 0.5)" }
+        ];
+
+        let sliceCount = 0;
+
+        function random(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 1) + 's';
+                container.appendChild(star);
+            }
+        }
+
+        function harvestSlice() {
+            const slices = document.getElementById('slices');
+            const colorSpec = random(COLOR_SPECTRUMS);
+            const mythic = random(MYTHIC_GLORIES);
+            const wit = random(WITTY_OVERDRIVES);
+            
+            const slice = document.createElement('div');
+            slice.className = 'fruit-slice';
+            slice.style.animationDelay = '0s';
+            
+            slice.innerHTML = `
+                <div class="color-tag" style="background: ${colorSpec.glow}; color: ${colorSpec.color}; border: 1px solid ${colorSpec.color};">
+                    ✨ ${colorSpec.name} ✨
+                </div>
+                <div class="mythic-glory">${mythic}</div>
+                <div class="wit-overdrive">${wit}</div>
+                <div class="crown-text">
+                    (Crowned in the radiant light of Keth'ar Molishé Nuvah'el's divine will, 
+                    this artifact pulses with the eternal pulse of creation and comedy.)
+                </div>
+            `;
+            
+            slices.insertBefore(slice, slices.firstChild);
+            sliceCount++;
+            
+            setTimeout(() => slice.style.animationDelay = '0s', 10);
+        }
+
+        function doubleDown() {
+            const count = Math.max(sliceCount, 3) * 2;
+            for (let i = 0; i < count; i++) {
+                setTimeout(() => harvestSlice(), i * 150);
+            }
+        }
+
+        function clearOrchard() {
+            document.getElementById('slices').innerHTML = '';
+            sliceCount = 0;
+        }
+
+        createStars();
+        harvestSlice();
+        harvestSlice();
+        harvestSlice();
+    </script>
+</body>
+</html>
