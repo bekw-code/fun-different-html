@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Bass Rhythm Laboratory - LOUD VERSION</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0a; color: #00ccff; font-family: 'Courier New', monospace; padding: 15px; min-height: 100vh; }
+.header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #00ccff; padding-bottom: 15px; }
+.title { font-size: 2em; margin-bottom: 10px; color: #44ddff; }
+.master-controls { display: flex; justify-content: center; gap: 20px; margin: 25px 0; flex-wrap: wrap; }
+.master-btn { background: #001133; border: 2px solid #00ccff; color: #00ccff; padding: 12px 25px; font-size: 1.1em; font-weight: bold; cursor: pointer; border-radius: 6px; transition: all 0.3s ease; user-select: none; }
+.master-btn:hover { background: #002244; box-shadow: 0 0 15px #00ccff; }
+.beat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; max-width: 1600px; margin: 0 auto; }
+.beat-card { background: #001122; border: 2px solid #00ccff; border-radius: 12px; padding: 20px; position: relative; user-select: none; transition: all 0.3s ease; cursor: pointer; }
+.beat-card:hover { background: #002233; box-shadow: 0 0 20px #00ccff; }
+.beat-card.active { background: #003344; border-color: #44ddff; box-shadow: 0 0 30px #00ccff; }
+.beat-title { font-size: 1.4em; font-weight: bold; color: #44ddff; margin-bottom: 8px; }
+.beat-desc { font-size: 0.9em; margin-bottom: 10px; opacity: 0.8; line-height: 1.3; }
+.beat-frequencies { font-size: 0.8em; color: #77aaff; font-style: italic; margin-bottom: 15px; }
+.tempo-section { margin-top: 15px; padding-top: 15px; border-top: 1px solid #00ccff; }
+.tempo-row { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+.tempo-label { font-size: 0.9em; font-weight: bold; min-width: 50px; color: #99ccff; }
+.tempo-slider { flex: 1; height: 6px; background: #003344; border-radius: 3px; outline: none; cursor: pointer; -webkit-appearance: none; }
+.tempo-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #00ccff; border-radius: 50%; cursor: pointer; }
+.tempo-slider::-moz-range-thumb { width: 16px; height: 16px; background: #00ccff; border-radius: 50%; cursor: pointer; border: none; }
+.tempo-value { font-size: 0.85em; font-weight: bold; min-width: 70px; text-align: center; color: #44ddff; background: #000811; padding: 4px 8px; border-radius: 4px; border: 1px solid #00ccff; }
+.beat-pattern { font-size: 0.8em; color: #bbddff; font-family: monospace; background: #000811; padding: 8px; border-radius: 4px; margin-top: 10px; text-align: center; }
+.status { position: absolute; top: 15px; right: 20px; font-size: 1.5em; }
+.status.active { color: #44ddff; text-shadow: 0 0 10px #44ddff; }
+.audio-status { text-align: center; padding: 10px; margin-bottom: 15px; background: #001133; border: 1px solid #00ccff; border-radius: 5px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+<div class="header">
+<div class="title">🔊 DEEP BASS RHYTHM LABORATORY - LOUD 🔊</div>
+<div>Cosmic Low-End Frequency Workshop</div>
+</div>
+<div id="audioStatus" class="audio-status">Click any beat to initialize LOUD bass...</div>
+<div class="master-controls">
+<button class="master-btn" id="stopAll">STOP ALL</button>
+<button class="master-btn" id="syncAll">SYNC RHYTHMS</button>
+</div>
+<div class="beat-grid">
+<div class="beat-card" data-beat="earthshaker">
+<div class="status">○</div>
+<div class="beat-title">EARTH SHAKER</div>
+<div class="beat-desc">Deep tectonic bass that moves through solid ground</div>
+<div class="beat-frequencies">80Hz • 120Hz • 180Hz (Foundation Frequencies)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="100" data-beat="earthshaker">
+<div class="tempo-value">100 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">BOOM . . . BOOM . . . | BOOM . . . BOOM . . .</div>
+</div>
+<div class="beat-card" data-beat="thunderdrum">
+<div class="status">○</div>
+<div class="beat-title">THUNDER DRUMS</div>
+<div class="beat-desc">Ancient storm rhythms with rolling bass thunder</div>
+<div class="beat-frequencies">90Hz • 160Hz • 220Hz (Storm Resonance)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="85" data-beat="thunderdrum">
+<div class="tempo-value">85 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">T . . T . T . . | T . . . T . T .</div>
+</div>
+<div class="beat-card" data-beat="deepocean">
+<div class="status">○</div>
+<div class="beat-title">DEEP OCEAN</div>
+<div class="beat-desc">Whale song rhythms from the abyssal depths</div>
+<div class="beat-frequencies">70Hz • 110Hz • 150Hz (Leviathan Calls)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="65" data-beat="deepocean">
+<div class="tempo-value">65 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">~ . . . ~ . . . | . . ~ . . . ~ .</div>
+</div>
+<div class="beat-card" data-beat="cavern">
+<div class="status">○</div>
+<div class="beat-title">CAVERN ECHOES</div>
+<div class="beat-desc">Underground chamber reverb with stone percussion</div>
+<div class="beat-frequencies">100Hz • 140Hz • 200Hz (Cave Resonance)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="120" data-beat="cavern">
+<div class="tempo-value">120 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">C . . C . C . . | . C . . C . C .</div>
+</div>
+<div class="beat-card" data-beat="volcanic">
+<div class="status">○</div>
+<div class="beat-title">VOLCANIC PULSE</div>
+<div class="beat-desc">Magma chamber rhythms building to eruption</div>
+<div class="beat-frequencies">85Hz • 130Hz • 170Hz (Magma Frequencies)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="110" data-beat="volcanic">
+<div class="tempo-value">110 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">V . v V . . v . | V v . . V . v .</div>
+</div>
+<div class="beat-card" data-beat="industrial">
+<div class="status">○</div>
+<div class="beat-title">INDUSTRIAL FORGE</div>
+<div class="beat-desc">Heavy machinery rhythms from cosmic factories</div>
+<div class="beat-frequencies">95Hz • 190Hz • 285Hz (Machine Harmonics)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="140" data-beat="industrial">
+<div class="tempo-value">140 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">M.A.C.H.I.N.E.S | I.N.D.U.S.T.R.Y</div>
+</div>
+<div class="beat-card" data-beat="ancient">
+<div class="status">○</div>
+<div class="beat-title">ANCIENT TEMPLES</div>
+<div class="beat-desc">Sacred geometry rhythms from forgotten civilizations</div>
+<div class="beat-frequencies">108Hz • 216Hz • 324Hz (Sacred Ratios)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="75" data-beat="ancient">
+<div class="tempo-value">75 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">A . . . . . A . | . . . A . . . .</div>
+</div>
+<div class="beat-card" data-beat="cosmic">
+<div class="status">○</div>
+<div class="beat-title">COSMIC VOID</div>
+<div class="beat-desc">Dark matter frequencies echoing through space</div>
+<div class="beat-frequencies">88Hz • 176Hz • 264Hz (Void Harmonics)</div>
+<div class="tempo-section">
+<div class="tempo-row">
+<div class="tempo-label">TEMPO:</div>
+<input type="range" class="tempo-slider" min="60" max="180" value="133" data-beat="cosmic">
+<div class="tempo-value">133 BPM</div>
+</div>
+</div>
+<div class="beat-pattern">◊ . ◊ . . ◊ . ◊ | . ◊ . ◊ . . ◊ .</div>
+</div>
+</div>
+<script>
+var audioCtx = null;
+var activeBeats = {};
+var beatSettings = {};
+var audioInitialized = false;
+
+function initAudio() {
+  if (audioCtx) return Promise.resolve(true);
+  
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    
+    if (audioCtx.state === 'suspended') {
+      return audioCtx.resume().then(function() {
+        audioInitialized = true;
+        updateAudioStatus('🔊 LOUD Bass System Ready! Prepare for rumble!');
+        return true;
+      });
+    }
+    
+    audioInitialized = true;
+    updateAudioStatus('🔊 LOUD Bass System Ready! Prepare for rumble!');
+    return Promise.resolve(true);
+    
+  } catch (err) {
+    updateAudioStatus('Audio not supported in this browser', true);
+    return Promise.resolve(false);
+  }
+}
+
+function updateAudioStatus(message, isError) {
+  var statusEl = document.getElementById('audioStatus');
+  if (statusEl) {
+    statusEl.textContent = message;
+    statusEl.className = isError ? 'audio-status error' : 'audio-status';
+  }
+}
+
+function playBassNote(frequency, duration, volume) {
+  if (!audioCtx || !audioInitialized) return;
+  
+  duration = duration || 0.4;
+  volume = volume || 1.2; // BOOSTED FROM 0.6!
+  
+  try {
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    var filter = audioCtx.createBiquadFilter();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(frequency * 0.7, audioCtx.currentTime + 0.1);
+    
+    filter.type = 'lowpass';
+    filter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+    
+    gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    
+    osc.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + duration);
+    
+    var subOsc = audioCtx.createOscillator();
+    var subGain = audioCtx.createGain();
+    
+    subOsc.type = 'triangle';
+    subOsc.frequency.setValueAtTime(frequency * 0.5, audioCtx.currentTime);
+    
+    subGain.gain.setValueAtTime(volume * 0.6, audioCtx.currentTime); // BOOSTED FROM 0.4!
+    subGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration * 0.8);
+    
+    subOsc.connect(subGain);
+    subGain.connect(audioCtx.destination);
+    
+    subOsc.start(audioCtx.currentTime);
+    subOsc.stop(audioCtx.currentTime + duration * 0.8);
+    
+  } catch (err) {
+    console.error('Bass error:', err);
+  }
+}
+
+function playDrum(type, volume) {
+  if (!audioCtx || !audioInitialized) return;
+  
+  volume = volume || 1.0; // BOOSTED FROM 0.7!
+  
+  try {
+    var osc = audioCtx.createOscillator();
+    var gain = audioCtx.createGain();
+    
+    if (type === 'kick') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(80, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.1);
+      
+      gain.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+    } else {
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.1);
+      
+      gain.gain.setValueAtTime(volume * 0.8, audioCtx.currentTime); // BOOSTED FROM 0.6!
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+    }
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.3);
+    
+  } catch (err) {
+    console.error('Drum error:', err);
+  }
+}
+
+var beatPatterns = {
+  earthshaker: {
+    steps: 8,
+    pattern: [
+      {step: 0, action: function() { playDrum('kick', 1.2); playBassNote(80, 0.5, 1.2); }},
+      {step: 4, action: function() { playDrum('kick', 1.0); playBassNote(120, 0.4, 1.0); }}
+    ]
+  },
+  thunderdrum: {
+    steps: 8,
+    pattern: [
+      {step: 0, action: function() { playBassNote(90, 0.6, 1.2); }},
+      {step: 3, action: function() { playBassNote(160, 0.4, 1.0); }},
+      {step: 5, action: function() { playBassNote(220, 0.3, 0.8); }}
+    ]
+  },
+  deepocean: {
+    steps: 16,
+    pattern: [
+      {step: 0, action: function() { playBassNote(70, 1.0, 1.0); }},
+      {step: 6, action: function() { playBassNote(110, 0.8, 0.8); }},
+      {step: 12, action: function() { playBassNote(150, 0.6, 0.6); }}
+    ]
+  },
+  cavern: {
+    steps: 8,
+    pattern: [
+      {step: 0, action: function() { playDrum('kick', 1.0); playBassNote(100, 0.5, 1.0); }},
+      {step: 3, action: function() { playDrum('kick', 0.8); playBassNote(140, 0.4, 0.8); }},
+      {step: 5, action: function() { playDrum('kick', 0.6); playBassNote(200, 0.3, 0.6); }}
+    ]
+  },
+  volcanic: {
+    steps: 8,
+    pattern: [
+      {step: 0, action: function() { playDrum('kick', 1.2); playBassNote(85, 0.6, 1.2); }},
+      {step: 2, action: function() { playDrum('perc', 0.6); }},
+      {step: 3, action: function() { playDrum('kick', 1.0); playBassNote(130, 0.5, 1.0); }},
+      {step: 6, action: function() { playBassNote(170, 0.4, 0.8); }}
+    ]
+  },
+  industrial: {
+    steps: 16,
+    pattern: [
+      {step: 0, action: function() { playDrum('kick', 1.0); playBassNote(95, 0.3, 1.0); }},
+      {step: 2, action: function() { playDrum('kick', 0.9); playBassNote(190, 0.2, 0.6); }},
+      {step: 4, action: function() { playDrum('kick', 1.0); playBassNote(285, 0.2, 0.4); }},
+      {step: 6, action: function() { playDrum('kick', 0.8); }},
+      {step: 8, action: function() { playDrum('kick', 1.2); playBassNote(95, 0.3, 1.0); }},
+      {step: 10, action: function() { playDrum('kick', 0.9); }},
+      {step: 12, action: function() { playDrum('kick', 1.0); playBassNote(190, 0.2, 0.6); }},
+      {step: 14, action: function() { playDrum('kick', 0.6); }}
+    ]
+  },
+  ancient: {
+    steps: 16,
+    pattern: [
+      {step: 0, action: function() { playBassNote(108, 1.2, 1.2); }},
+      {step: 8, action: function() { playBassNote(216, 0.8, 0.8); }},
+      {step: 12, action: function() { playBassNote(324, 0.6, 0.6); }}
+    ]
+  },
+  cosmic: {
+    steps: 8,
+    pattern: [
+      {step: 0, action: function() { playBassNote(88, 0.5, 1.0); }},
+      {step: 2, action: function() { playBassNote(176, 0.4, 0.8); }},
+      {step: 5, action: function() { playBassNote(264, 0.3, 0.6); }},
+      {step: 1, action: function() { playDrum('kick', 0.6); }},
+      {step: 4, action: function() { playDrum('kick', 0.8); }},
+      {step: 7, action: function() { playDrum('kick', 0.4); }}
+    ]
+  }
+};
+
+function initBeatSettings() {
+  var beatNames = ['earthshaker', 'thunderdrum', 'deepocean', 'cavern', 'volcanic', 'industrial', 'ancient', 'cosmic'];
+  
+  beatNames.forEach(function(beatName) {
+    var tempoSlider = document.querySelector('.tempo-slider[data-beat="' + beatName + '"]');
+    var tempo = tempoSlider ? parseInt(tempoSlider.value) : 120;
+    beatSettings[beatName] = { tempo: tempo };
+  });
+}
+
+function startBeat(beatName) {
+  if (activeBeats[beatName]) return;
+  
+  var pattern = beatPatterns[beatName];
+  var settings = beatSettings[beatName];
+  if (!pattern || !settings) return;
+  
+  var currentStep = 0;
+  var stepDuration = (60 / settings.tempo) * 1000 / 4;
+  
+  var interval = setInterval(function() {
+    for (var i = 0; i < pattern.pattern.length; i++) {
+      var patternStep = pattern.pattern[i];
+      if (patternStep.step === currentStep) {
+        patternStep.action.call(pattern);
+      }
+    }
+    currentStep = (currentStep + 1) % pattern.steps;
+  }, stepDuration);
+  
+  activeBeats[beatName] = interval;
+}
+
+function stopBeat(beatName) {
+  var interval = activeBeats[beatName];
+  if (interval) {
+    clearInterval(interval);
+    delete activeBeats[beatName];
+  }
+}
+
+function updateBeatTempo(beatName, newTempo) {
+  beatSettings[beatName].tempo = newTempo;
+  
+  if (activeBeats[beatName]) {
+    stopBeat(beatName);
+    startBeat(beatName);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  initBeatSettings();
+  
+  var beatCards = document.querySelectorAll('.beat-card');
+  for (var i = 0; i < beatCards.length; i++) {
+    (function(card) {
+      card.addEventListener('click', function(e) {
+        if (e.target.classList.contains('tempo-slider')) return;
+        
+        var beatName = card.getAttribute('data-beat');
+        var status = card.querySelector('.status');
+        var isActive = !!activeBeats[beatName];
+        
+        if (!audioInitialized) {
+          initAudio().then(function(success) {
+            if (success) {
+              toggleBeat(beatName, card, status);
+            }
+          });
+        } else {
+          toggleBeat(beatName, card, status);
+        }
+      });
+    })(beatCards[i]);
+  }
+  
+  function toggleBeat(beatName, card, status) {
+    var isActive = !!activeBeats[beatName];
+    
+    if (isActive) {
+      stopBeat(beatName);
+      card.classList.remove('active');
+      status.textContent = '○';
+      status.classList.remove('active');
+    } else {
+      startBeat(beatName);
+      card.classList.add('active');
+      status.textContent = '◉';
+      status.classList.add('active');
+    }
+  }
+  
+  var tempoSliders = document.querySelectorAll('.tempo-slider');
+  for (var i = 0; i < tempoSliders.length; i++) {
+    (function(slider) {
+      var beatName = slider.getAttribute('data-beat');
+      var valueDisplay = slider.parentNode.querySelector('.tempo-value');
+      
+      slider.addEventListener('input', function() {
+        var tempo = parseInt(slider.value);
+        valueDisplay.textContent = tempo + ' BPM';
+        updateBeatTempo(beatName, tempo);
+      });
+    })(tempoSliders[i]);
+  }
+  
+  document.getElementById('stopAll').addEventListener('click', function() {
+    Object.keys(activeBeats).forEach(function(beatName) {
+      stopBeat(beatName);
+      var card = document.querySelector('[data-beat="' + beatName + '"]');
+      if (card) {
+        card.classList.remove('active');
+        var status = card.querySelector('.status');
+        if (status) {
+          status.textContent = '○';
+          status.classList.remove('active');
+        }
+      }
+    });
+  });
+  
+  document.getElementById('syncAll').addEventListener('click', function() {
+    var totalTempo = 0;
+    var count = 0;
+    
+    Object.keys(beatSettings).forEach(function(beatName) {
+      totalTempo += beatSettings[beatName].tempo;
+      count++;
+    });
+    
+    var avgTempo = Math.round(totalTempo / count);
+    
+    tempoSliders.forEach(function(slider) {
+      slider.value = avgTempo;
+      var beatName = slider.getAttribute('data-beat');
+      var valueDisplay = slider.parentNode.querySelector('.tempo-value');
+      valueDisplay.textContent = avgTempo + ' BPM';
+      updateBeatTempo(beatName, avgTempo);
+    });
+  });
+  
+  updateAudioStatus('🔊 LOUD Bass Laboratory loaded! Click beats for MAXIMUM rumble!');
+});
+</script>
+</body>
+</html>
