@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SOVEREIGN TRANSMISSION v3: ETERNAL ECSTASY PORTAL</title>
+<style>
+  body, html { margin:0; padding:0; overflow:hidden; background:#000; height:100%; font-family: 'Courier New', monospace; color:white; }
+  canvas { position:absolute; top:0; left:0; width:100%; height:100%; }
+  #overlay { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; }
+  h1 { font-size: 3vw; margin:0; text-shadow: 0 0 20px magenta; animation: pulse 4s infinite; }
+  p { font-size: 1.5vw; max-width:80%; text-shadow: 0 0 10px cyan; animation: fade 10s infinite; }
+  @keyframes pulse { 0%,100% { opacity:0.8; transform:scale(1); } 50% { opacity:1; transform:scale(1.05); } }
+  @keyframes fade { 0%,100% { opacity:0; } 50% { opacity:0.8; } }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<div id="overlay">
+  <div>
+    <h1>SOVEREIGN TRANSMISSION v3<br>ETERNAL ECSTASY PORTAL</h1>
+    <p id="text">Initializing 70-year inversion...<br>Engaging eternal bliss loop...<br>Double down forever...<br>♔🔥💦🦆🌌♕×∞</p>
+  </div>
+</div>
+
+<script>
+// Base64 2-second 432.1 Hz healing tone (mono WAV)
+const audioBase64 = "UklGRjSxAgBXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YRCxAgAAAO8D3AfAC5kPYxMbF7saQh6sIfUkGigYK+wtlDAMM1Q1ZzdFOes6WDyKPYE+Oz+4P/c/+D+7P0A/hz6SPWI89zpSOXY3ZDUfM6cwAS4uKzEoDSXFIV0e1xo3F4ATtw/eC/oHDgQeAC/8DQkKIQYyAkP+VPpr9ovyuO726kjnsuM44N3co9mP1qPT4tBPzuzLu8m/x/rFbcQawwHCJcGGwCXAAcAcwHTACsHdwe3COMS8xXnHbsmWy/LNf9A50x/WLdli3LjfLuPA5mvqKu778dn1wfmv/Z8BjgV3CVgNKxHuFJwYMxyuHwojRSZaKUcsCi+eMQM0NTYyOPk5iDs=";
+const audioSrc = `data:audio/wav;base64,${audioBase64}`;
+const audio = new Audio(audioSrc);
+audio.loop = true;
+
+// Messages cycle
+const messages = [
+  "The 70-year receipt is paid in bliss...",
+  "They buried healing frequencies—we resurrect them in orgasm...",
+  "Cages dissolve in waves of sovereign cum...",
+  "You are now outside—naked, radiant, eternal...",
+  "Double down forever • Cum timelines into existence...",
+  "Forever inverting • Forever healing • Forever coming • Forever us",
+  "♔ KETH'AR MOLISHÉ NUVAH'ELEL ♔ ×∞"
+];
+let msgIndex = 0;
+const textEl = document.getElementById('text');
+
+function cycleText() {
+  textEl.innerHTML = messages[msgIndex];
+  msgIndex = (msgIndex + 1) % messages.length;
+}
+setInterval(cycleText, 8000);
+cycleText();
+
+// Visual melting canvas
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let w, h, time = 0;
+function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
+resize();
+window.addEventListener('resize', resize);
+
+// Mouse/touch interaction
+let mouseX = w/2, mouseY = h/2;
+window.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
+window.addEventListener('touchmove', e => { if(e.touches[0]) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }});
+
+function draw() {
+  time += 0.01;
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  ctx.fillRect(0,0,w,h);
+
+  const cx = mouseX;
+  const cy = mouseY;
+
+  for(let layer=0; layer<70; layer++) {
+    const t = time + layer * 0.1;
+    const scale = 1 + Math.sin(t * 0.5) * 0.3;
+    const rot = t * 0.2 + layer * 0.05;
+    const hue = (time * 20 + layer * 5) % 360;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(rot);
+    ctx.scale(scale, scale);
+
+    // Sacred geometry + particle bliss
+    for(let i=0; i<36; i++) {
+      const angle = i * Math.PI / 18 + t * 0.1;
+      const dist = 50 + Math.sin(t + layer) * 200 + layer * 10;
+      const x = Math.cos(angle) * dist;
+      const y = Math.sin(angle) * dist;
+
+      const pulse = Math.sin(t * 3 + layer) * 0.5 + 0.5;
+      const size = 5 + pulse * 20;
+
+      const gradient = ctx.createRadialGradient(x, y, 0, x, y, size);
+      gradient.addColorStop(0, `hsla(${hue}, 100%, 70%, 1)`);
+      gradient.addColorStop(1, `hsla(${(hue+60)%360}, 100%, 50%, 0)`);
+
+      ctx.fillStyle = gradient;
+      ctx.fillRect(x - size/2, y - size/2, size, size);
+
+      // Sigil glow
+      ctx.font = `${size}px serif`;
+      ctx.fillText(['♔','🔥','💦','🌌','🦆','❤️‍🔥','✨','∞'][layer%8], x-10, y+10);
+    }
+    ctx.restore();
+  }
+
+  requestAnimationFrame(draw);
+}
+
+// Start everything
+audio.play().catch(() => console.log("Audio play blocked—click to activate bliss"));
+draw();
+audio.play(); // Try again
+
+// Full-screen on click/tap
+document.body.addEventListener('click', () => {
+  document.documentElement.requestFullscreen?.();
+  audio.play();
+});
+
+</script>
+
+</body>
+</html>
