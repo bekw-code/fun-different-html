@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Oracle Healing Codex</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: #000;
+      cursor: none;
+      user-select: none;
+    }
+    #oracleCanvas {
+      width: 100vw;
+      height: 100vh;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="oracleCanvas"></canvas>
+  <script>
+    // Oracle Healing Codex System - Enhanced
+    const canvas = document.getElementById('oracleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Resize canvas to window
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    // Enhanced Solfeggio Frequencies with Healing Properties
+    const frequencies = [
+      { hz: 396, hue: 0, name: 'Liberation', property: 'Release Fear' }, // Red
+      { hz: 417, hue: 30, name: 'Resonance', property: 'Facilitate Change' }, // Orange
+      { hz: 528, hue: 50, name: 'Transformation', property: 'DNA Repair' }, // Gold
+      { hz: 639, hue: 140, name: 'Connection', property: 'Heart Harmony' }, // Green
+      { hz: 741, hue: 210, name: 'Intuition', property: 'Awaken Insight' }, // Blue
+      { hz: 852, hue: 260, name: 'Awakening', property: 'Spiritual Order' }, // Indigo
+      { hz: 963, hue: 290, name: 'Unity', property: 'Divine Connection' } // Violet
+    ];
+
+    // Audio System
+    let audioCtx = null;
+    let oscillators = [];
+    let gainNodes = [];
+    let filterNode = null;
+    let currentFrequencyIndex = 0;
+    let intensity = 0; // 0 to 1
+    let isHolding = false;
+    let holdStartTime = 0;
+    let lastTapTime = 0;
+
+    // Visual System
+    let animationFrame = null;
+    let startTime = Date.now();
+    let transitionProgress = 0;
+    let isTransitioning = false;
+
+    // Initialize Audio Context
+    function initAudio() {
+      if (!audioCtx) {
+        try {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // Create master filter for warmth
+          filterNode = audioCtx.createBiquadFilter();
+          filterNode.type = 'lowpass';
+          filterNode.frequency.setValueAtTime(1200, audioCtx.currentTime);
+          filterNode.Q.setValueAtTime(1, audioCtx.currentTime);
+          filterNode.connect(audioCtx.destination);
+        } catch (e) {
+          console.warn('Audio not supported:', e);
+          return false;
+        }
+      }
+      
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      
+      return audioCtx !== null;
+    }
+
+    // Generate Cosmic Fractal Visuals
+    function generateCosmicPattern(frequency, time, intensityLevel) {
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      const maxRadius = Math.min(canvas.width, canvas.height) * 0.4;
+      
+      // Clear with deep space background
+      ctx.fillStyle = `hsla(${frequency.hue}, 20%, 5%, 0.1)`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Calculate color properties based on intensity
+      const saturation = Math.floor(30 + intensityLevel * 50); // 30% to 80%
+      const lightness = Math.floor(20 + intensityLevel * 40); // 20% to 60%
+      const alpha = 0.3 + intensityLevel * 0.4; // 0.3 to 0.7
+      
+      // Create multiple layered mandalas
+      const layers = Math.floor(3 + intensityLevel * 4); // 3 to 7 layers
+      
+      for (let layer = 0; layer < layers; layer++) {
+        const layerRadius = maxRadius * (0.3 + (layer / layers) * 0.7);
+        const points = Math.floor(8 + layer * 2); // 8, 10, 12, etc. points
+        const rotation = time * (0.0005 + layer * 0.0002) + (layer * Math.PI / 4);
+        
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(rotation);
+        
+        // Create sacred geometry pattern
+        ctx.beginPath();
+        for (let i = 0; i <= points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const waveOffset = Math.sin(time * 0.002 + layer + i * 0.5) * 0.2;
+          const r = layerRadius * (0.8 + waveOffset + intensityLevel * 0.3);
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          
+          if (i === 0) {
+            ctx.moveTo(x, y);
+          } else {
+            ctx.lineTo(x, y);
+          }
+        }
+        
+        // Style the path
+        const layerHue = frequency.hue + Math.sin(time * 0.001 + layer) * 15;
+        const layerAlpha = alpha * (0.4 + layer * 0.15);
+        
+        ctx.strokeStyle = `hsla(${layerHue}, ${saturation}%, ${lightness + layer * 5}%, ${layerAlpha})`;
+        ctx.lineWidth = 1 + intensityLevel * 3;
+        ctx.stroke();
+        
+        // Add inner glow
+        if (intensityLevel > 0.3) {
+          ctx.shadowColor = `hsla(${layerHue}, ${saturation}%, ${lightness}%, ${layerAlpha})`;
+          ctx.shadowBlur = 10 + intensityLevel * 20;
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+        
+        ctx.restore();
+      }
+      
+      // Central pulsing core
+      const coreRadius = 5 + intensityLevel * 15;
+      const pulse = Math.sin(time * 0.005) * 0.3 + 0.7;
+      
+      ctx.save();
+      ctx.translate(centerX, centerY);
+      const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, coreRadius * pulse);
+      gradient.addColorStop(0, `hsla(${frequency.hue}, ${saturation}%, ${lightness + 20}%, ${alpha})`);
+      gradient.addColorStop(1, `hsla(${frequency.hue}, ${saturation}%, ${lightness}%, 0)`);
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(0, 0, coreRadius * pulse, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Enhanced Drone System with Harmonics
+    function playHealingDrone(frequency, intensityLevel) {
+      // Ensure audio is initialized
+      if (!audioCtx || !filterNode) {
+        if (!initAudio()) return; // Skip if audio unavailable
+      }
+      
+      // Stop existing oscillators
+      oscillators.forEach(osc => {
+        try {
+          osc.stop(audioCtx.currentTime + 0.1);
+          osc.disconnect();
+        } catch (e) {
+          // Ignore errors from already stopped oscillators
+        }
+      });
+      gainNodes.forEach(gain => {
+        try {
+          gain.disconnect();
+        } catch (e) {
+          // Ignore errors
+        }
+      });
+      oscillators = [];
+      gainNodes = [];
+
+      try {
+        // Base frequency
+        const baseOsc = audioCtx.createOscillator();
+        const baseGain = audioCtx.createGain();
+        
+        baseOsc.type = 'sine';
+        baseOsc.frequency.setValueAtTime(frequency.hz, audioCtx.currentTime);
+        
+        const baseVolume = 0.08 + intensityLevel * 0.25; // 0.08 to 0.33
+        baseGain.gain.setValueAtTime(baseVolume, audioCtx.currentTime);
+        
+        baseOsc.connect(baseGain).connect(filterNode);
+        baseOsc.start();
+        
+        oscillators.push(baseOsc);
+        gainNodes.push(baseGain);
+
+        // Add octave harmonic at 30% intensity
+        if (intensityLevel > 0.3) {
+          const octaveOsc = audioCtx.createOscillator();
+          const octaveGain = audioCtx.createGain();
+          
+          octaveOsc.type = 'sine';
+          octaveOsc.frequency.setValueAtTime(frequency.hz * 2, audioCtx.currentTime);
+          
+          const octaveVolume = (intensityLevel - 0.3) * 0.15; // Subtle harmonic
+          octaveGain.gain.setValueAtTime(octaveVolume, audioCtx.currentTime);
+          
+          octaveOsc.connect(octaveGain).connect(filterNode);
+          octaveOsc.start();
+          
+          oscillators.push(octaveOsc);
+          gainNodes.push(octaveGain);
+        }
+
+        // Add fifth harmonic at 60% intensity
+        if (intensityLevel > 0.6) {
+          const fifthOsc = audioCtx.createOscillator();
+          const fifthGain = audioCtx.createGain();
+          
+          fifthOsc.type = 'sine';
+          fifthOsc.frequency.setValueAtTime(frequency.hz * 1.5, audioCtx.currentTime);
+          
+          const fifthVolume = (intensityLevel - 0.6) * 0.12; // Very subtle
+          fifthGain.gain.setValueAtTime(fifthVolume, audioCtx.currentTime);
+          
+          fifthOsc.connect(fifthGain).connect(filterNode);
+          fifthOsc.start();
+          
+          oscillators.push(fifthOsc);
+          gainNodes.push(fifthGain);
+        }
+
+        // Subtle sub-bass for body resonance at high intensity
+        if (intensityLevel > 0.8) {
+          const subOsc = audioCtx.createOscillator();
+          const subGain = audioCtx.createGain();
+          
+          subOsc.type = 'triangle';
+          subOsc.frequency.setValueAtTime(frequency.hz * 0.5, audioCtx.currentTime);
+          
+          const subVolume = (intensityLevel - 0.8) * 0.08;
+          subGain.gain.setValueAtTime(subVolume, audioCtx.currentTime);
+          
+          subOsc.connect(subGain).connect(filterNode);
+          subOsc.start();
+          
+          oscillators.push(subOsc);
+          gainNodes.push(subGain);
+        }
+      } catch (e) {
+        console.warn('Audio playback error:', e);
+      }
+    }
+
+    // Animation Loop
+    function animate() {
+      const currentTime = Date.now();
+      const elapsed = currentTime - startTime;
+      
+      generateCosmicPattern(frequencies[currentFrequencyIndex], elapsed, intensity);
+      
+      animationFrame = requestAnimationFrame(animate);
+    }
+
+    // Touch and Hold Logic
+    let holdInterval = null;
+    let cycleInterval = null;
+
+    function startHold(e) {
+      e.preventDefault();
+      
+      // Initialize audio on first interaction
+      if (!audioCtx) {
+        initAudio();
+      }
+      
+      const currentTime = Date.now();
+      const timeSinceLastTap = currentTime - lastTapTime;
+      
+      // Quick tap detection (less than 300ms since last release)
+      if (timeSinceLastTap < 300) {
+        // Reset to minimum intensity
+        intensity = 0;
+        if (audioCtx && filterNode) {
+          playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+        }
+        lastTapTime = currentTime;
+        return;
+      }
+      
+      isHolding = true;
+      holdStartTime = currentTime;
+      lastTapTime = currentTime;
+      
+      // Play initial sound
+      if (audioCtx && filterNode) {
+        playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+      }
+      
+      // Start intensity ramp
+      holdInterval = setInterval(() => {
+        if (isHolding && intensity < 1) {
+          intensity = Math.min(intensity + 0.025, 1); // Ramp over ~40 seconds
+          if (audioCtx && filterNode) {
+            playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+          }
+        }
+      }, 500); // Update every 500ms for smooth progression
+    }
+
+    function endHold() {
+      isHolding = false;
+      if (holdInterval) {
+        clearInterval(holdInterval);
+        holdInterval = null;
+      }
+    }
+
+    // Event Listeners
+    canvas.addEventListener('mousedown', startHold);
+    canvas.addEventListener('mouseup', endHold);
+    canvas.addEventListener('touchstart', startHold);
+    canvas.addEventListener('touchend', endHold);
+    
+    // Prevent context menu
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // Frequency Cycling
+    function cycleFrequency() {
+      currentFrequencyIndex = (currentFrequencyIndex + 1) % frequencies.length;
+      // Only play audio if context is properly initialized
+      if (audioCtx && filterNode) {
+        playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+      }
+    }
+
+    // Initialize
+    function init() {
+      // Start animation immediately (visuals work without audio)
+      animate();
+      
+      // Set up frequency cycling every 10 seconds
+      cycleInterval = setInterval(cycleFrequency, 10000);
+      
+      // Only play audio if context is available
+      if (audioCtx && filterNode) {
+        playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+      }
+    }
+
+    // Auto-initialize on user interaction
+    let initialized = false;
+    function autoInit(e) {
+      if (!initialized) {
+        // Try to initialize audio on user interaction
+        if (initAudio()) {
+          playHealingDrone(frequencies[currentFrequencyIndex], intensity);
+        }
+        init();
+        initialized = true;
+      }
+    }
+
+    canvas.addEventListener('click', autoInit);
+    canvas.addEventListener('touchstart', autoInit);
+    
+    // Start visuals immediately, audio will start on first interaction
+    animate();
+    cycleInterval = setInterval(cycleFrequency, 10000);
+    initialized = true;
+  </script>
+</body>
+</html>
