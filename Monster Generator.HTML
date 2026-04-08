@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Monster Generator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #1a1a2e, #2c2f3a);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: rgba(44, 47, 58, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(26, 26, 46, 0.5);
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #b22222;
+            text-shadow: 0 0 5px #b22222;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background: #b22222;
+            border: none;
+            border-radius: 5px;
+            color: #fff;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #dc143c;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .monster-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            min-height: 200px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+        .copy-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Monster Generator</h1>
+        <button id="generateBtn">Generate Monster</button>
+        <div id="monsterDisplay" class="monster-display"></div>
+        <button id="copyBtn" class="copy-btn" disabled>Copy Prompt</button>
+    </div>
+    <script>
+        // Monster Aspect Arrays (100 entries each)
+        const bodyTypes = [
+            "slithering serpentine form", "hulking skeletal frame", "twisted wraith body",
+            "lumbering ogre torso", "gaunt specter form", "pulsating blob of flesh",
+            "towering insectoid husk", "shapeshifting mist figure", "gnarled tree-like trunk",
+            "spider-legged abomination", "fleshy mound with writhing tendrils", "emaciated ghoul frame",
+            "armored beetle body", "floating orb of darkness", "multi-segmented worm shape",
+            "bipedal skeletal giant", "oozing sludge creature", "crystalline humanoid form",
+            "winged bat-like torso", "crawling centipede mass", "rotting zombie husk",
+            "ethereal vaporous shell", "spiked troll physique", "gelatinous cube shape",
+            "four-armed demon bulk", "hollow-eyed scarecrow frame", "leathery bat-winged body",
+            "segmented scorpion tail", "puppet-like wooden figure", "jagged rock-skinned beast",
+            "skeletal horse hybrid", "fungal-covered mound", "slimy eel-like form",
+            "armored crab-like shell", "twisted vine-wrapped torso", "glowing jellyfish body",
+            "rusted iron golem frame", "feathered harpy torso", "pulsing heart-like mass",
+            "chitinous insect queen", "decayed merman shape", "stone gargoyle statue",
+            "withered mummy casing", "spectral wolf silhouette", "bloated toad monster",
+            "clattering bone pile", "shimmering mirage form", "razor-backed reptile",
+            "multi-headed hydra body", "cackling jester skeleton", "shadow-drenched wraith",
+            "tattered cloak entity", "spiked porcupine bulk", "weeping willow spirit",
+            "crusted lava beast", "glistening slug form", "rattling chain ghost",
+            "fanged boar hybrid", "spectral raven shape", "jelly-like blob monster",
+            "thorned vine creature", "hunchbacked troll frame", "icy frost giant torso",
+            "rotting fishman body", "glimmering ghost ship hull", "crawling hand mass",
+            "spiked mace-headed brute", "skeletal rat swarm", "pulsing eyeball cluster",
+            "feathered owl demon", "cracked porcelain doll", "slithering shadow snake",
+            "glowing fungal stalk", "rusted knight armor", "twisted marionette form",
+            "spectral cat silhouette", "oozing tar pit beast", "jagged crystal golem",
+            "hollow pumpkin head", "webbed frog monster", "shattered mirror entity"
+        ];
+        const heads = [
+            "horned skull with glowing cracks", "lantern-jawed maw", "multi-eyed grotesque face",
+            "hollow-eyed skull cap", "fanged wolf skull", "crown of writhing snakes",
+            "single cyclopean eye", "jagged bone mask", "glowing jack-o'-lantern head",
+            "tentacled maw with sharp teeth", "skull with antler stubs", "rotting zombie face",
+            "beaked raven head", "spiked demon helm", "hollow pumpkin grin",
+            "three-eyed toad face", "crystal-encrusted skull", "gnashing insect jaw",
+            "ghostly wisp face", "horned goat visage", "decayed human mask",
+            "fiery eye sockets", "spider-web covered head", "rusted metal faceplate",
+            "spectral owl head", "jagged shark teeth", "cackling clown skull",
+            "glowing fungal cap", "hollowed-out tree face", "piercing eagle beak",
+            "multi-horned bull head", "slimy eel jaw", "cracked porcelain face",
+            "shadow-drenched skull", "glowing red orb head", "thorned crown visage",
+            "skeletal bat face", "pulsing brain mass", "rattling chain collar",
+            "weeping widow’s head", "jagged crystal jaw", "hissing snake skull",
+            "glowing ember eyes", "rotting stag antlers", "spectral cat face",
+            "spiked turtle shell head", "hollow lantern grin", "frostbitten wolf jaw",
+            "multi-fanged maw", "cursed knight helm", "shimmering ghost face",
+            "thorned vine skull", "oozing slime head", "rusted iron mask",
+            "glowing moth antennae", "decayed fish head", "jagged rock face",
+            "spectral raven beak", "pulsing eye cluster", "hollowed pumpkin eyes",
+            "spiked lizard skull", "crystalline deer antlers", "ghastly clown grin",
+            "shadowy wraith head", "glowing fungal spores", "rattling bone jaw",
+            "webbed frog face", "jagged crystal orb", "hissing cobra hood"
+        ];
+        const limbs = [
+            "clawed tentacles dripping ichor", "bony wings with tattered edges",
+            "webbed claws with razor tips", "gnarled limbs with spiked joints",
+            "spiked scorpion tails", "fleshy tendrils with suckers", "skeletal arms with hooks",
+            "leathery bat wings", "crab-like pincers", "twisted vine arms",
+            "rusted chain legs", "glowing fungal stalks", "razor-sharp claws",
+            "segmented insect legs", "ghostly mist tendrils", "spiked ogre fists",
+            "webbed frog legs", "bony spider legs", "thorny whip arms",
+            "crystalline talons", "pulsing muscle tentacles", "rattling bone arms",
+            "shadow-drenched claws", "jagged rock limbs", "feathered raven wings",
+            "slimy eel tails", "hollowed wooden legs", "glowing ember hands",
+            "decayed zombie arms", "spiked mace tails", "spectral wolf paws",
+            "oozing sludge limbs", "crystal-encrusted legs", "thorned vine tendrils",
+            "rusted iron claws", "pulsing eyeball stalks", "weeping willow branches",
+            "jagged crystal arms", "hollow pumpkin vines", "shattered mirror shards",
+            "fanged bat wings", "crusted lava legs", "glistening slug trails",
+            "rattling chain arms", "spiked porcupine quills", "skeletal rat tails",
+            "feathered harpy claws", "cracked porcelain limbs", "slithering shadow tendrils",
+            "glowing fungal roots", "rusted knight gauntlets", "twisted marionette strings",
+            "spectral cat paws", "oozing tar claws", "jagged crystal legs",
+            "hollowed-out bone arms", "webbed toad feet", "shimmering mirage limbs"
+        ];
+        const skins = [
+            "scaly rot with oozing sores", "ghostly mist with shifting forms",
+            "thorny hide with barbed spines", "putrid flesh with fungal growth",
+            "leathery hide with cracked scales", "spectral shroud of fog",
+            "rusted iron plating", "slimy green ooze", "crystalline shell",
+            "decayed bark with moss", "glowing fungal patches", "shimmering ghost skin",
+            "spiked bone armor", "oozing black tar", "frostbitten icy hide",
+            "thorned vine covering", "pulsing fleshy mass", "rattling chain mail",
+            "webbed slime coating", "jagged rock crust", "feathered decay",
+            "slithering snake scales", "hollowed wooden husk", "glowing ember skin",
+            "rotting zombie flesh", "spiked turtle shell", "spectral mist cloak",
+            "crusted lava flow", "glistening slug mucus", "rusted metal shards",
+            "glowing moth wings", "decayed fish scales", "jagged crystal hide",
+            "spectral raven feathers", "pulsing eye membrane", "hollow pumpkin rind",
+            "spiked lizard skin", "crystalline deer pelt", "ghastly clown makeup",
+            "shadow-drenched veil", "glowing fungal spores", "rattling bone dust",
+            "webbed frog slime", "jagged mirror shards", "hissing cobra scales"
+        ];
+        const eyes = [
+            "glowing red orbs with malice", "hollow sockets with faint light",
+            "shifting irises of violet haze", "piercing yellow slits",
+            "glowing green embers", "black voids with white pupils",
+            "multi-colored kaleidoscope eyes", "frostbitten blue orbs",
+            "pulsing purple glow", "skeletal hollow gaze", "ruby-red glints",
+            "emerald slits with malice", "sapphire orbs with tears", "onyx voids",
+            "amber flares with hunger", "violet misted eyes", "crystal shards",
+            "glowing jack-o'-lantern lights", "hollowed spider eyes", "jagged red streaks",
+            "shimmering ghost pupils", "thorny black orbs", "pulsing fungal glow",
+            "rusted iron glints", "spectral white haze", "jagged yellow slits",
+            "glowing moth antennae", "decayed fish stare", "crystalline blue gaze",
+            "shadow-drenched sockets", "glowing ember flares", "rotting skull eyes",
+            "spiked lizard pupils", "hollowed deer orbs", "ghastly clown grin",
+            "spectral raven gaze", "pulsing brain lights", "rattling chain reflections",
+            "weeping widow tears", "jagged crystal orbs", "hissing snake eyes"
+        ];
+        const weaponsSpellsItems = [
+            "cursed scythe dripping shadow", "shadow-casting wand with bone handle",
+            "skull-topped staff with necrotic aura", "flame-etched dagger",
+            "frost-rimed axe with icy edge", "blood-stained sickle",
+            "rune-carved sword with glowing blade", "poisoned dart blower",
+            "skull-crushing mace", "shadow-woven whip", "cursed tome with dark spells",
+            "bone-handled dagger with venom tip", "glowing orb of decay",
+            "thorned flail with barbed chains", "haunted lantern with ghostly light",
+            "crystal shard spear", "rusted cleaver with blood stains",
+            "spectral bow with shadow arrows", "jagged bone club", "pulsing necrotic staff",
+            "flame-spitting skull helm", "icy wand with frost aura", "cursed mirror shield",
+            "spiked chain flail", "ghastly scythe with wailing blade",
+            "rune-etched gauntlet", "poisoned throwing stars", "shadow-drenched dagger",
+            "glowing fungal staff", "rattling bone scepter", "webbed net with venom",
+            "jagged crystal blade", "hollow pumpkin bomb", "shattered mirror shard",
+            "fanged bat claw weapon", "crusted lava mace", "glistening slug whip",
+            "rusted iron spear", "spiked porcupine dart", "spectral wolf fang",
+            "oozing tar club", "crystal-encrusted axe", "thorned vine lash",
+            "rusted knight sword", "pulsing eyeball wand", "weeping willow staff",
+            "jagged rock hammer", "hollowed-out bone blade", "webbed toad dart"
+        ];
+        const habitats = [
+            "foggy graveyard with twisted trees", "cursed swamp with bubbling mire",
+            "haunted mansion with creaking floors", "abandoned crypt with stone coffins",
+            "shadowy forest with glowing eyes", "rotting shipwreck with skeletal crew",
+            "desolate moor with moaning winds", "cursed cathedral with stained glass",
+            "icy cavern with frozen screams", "haunted village with empty streets",
+            "swampy bog with glowing fungi", "abandoned asylum with echoing cries",
+            "twisted hedge maze", "spectral battlefield with ghostly soldiers",
+            "darkened cave with dripping blood", "cursed castle with iron gates",
+            "foggy moor with lost souls", "haunted lighthouse with broken beam",
+            "rotting orchard with skeletal branches", "deserted mine with ghostly whispers",
+            "shadow-drenched valley", "cursed river with skeletal fish", "haunted mill",
+            "icy tundra with frozen corpses", "abandoned carnival with rusted rides",
+            "swampy graveyard with rising dead", "haunted forest with glowing mist",
+            "cursed tower with wailing spirits", "desolate beach with shipwrecks",
+            "shadowy crypt with chained ghosts", "rotting vineyard with skeletal vines",
+            "haunted ruins with crumbling walls", "icy fjord with spectral ships",
+            "cursed jungle with whispering trees", "abandoned factory with clanking chains",
+            "foggy marsh with glowing skulls", "haunted bridge with lost travelers",
+            "deserted chapel with broken pews", "shadow-drenched swamp",
+            "cursed mountain with howling winds", "haunted clocktower with ticking ghosts"
+        ];
+
+        // DOM Elements
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const monsterDisplay = document.getElementById('monsterDisplay');
+
+        // Generate Monster Function
+        function generateMonster() {
+            const randomBody = bodyTypes[Math.floor(Math.random() * bodyTypes.length)];
+            const randomHead = heads[Math.floor(Math.random() * heads.length)];
+            const randomLimbs = limbs[Math.floor(Math.random() * limbs.length)];
+            const randomSkin = skins[Math.floor(Math.random() * skins.length)];
+            const randomEyes = eyes[Math.floor(Math.random() * eyes.length)];
+            const randomWeapon = weaponsSpellsItems[Math.floor(Math.random() * weaponsSpellsItems.length)];
+            const randomHabitat = habitats[Math.floor(Math.random() * habitats.length)];
+
+            const monsterDescription = `A terrifying monster with a ${randomBody}, a ${randomHead}, ${randomLimbs}, covered in ${randomSkin}, with ${randomEyes}, wielding ${randomWeapon}, lurking in a ${randomHabitat}.`;
+            monsterDisplay.textContent = monsterDescription;
+            copyBtn.disabled = false;
+        }
+
+        // Copy to Clipboard Function
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = monsterDisplay.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('Prompt copied to clipboard!');
+            }).catch(err => {
+                alert('Copy failed. Copy manually: ' + textToCopy);
+            });
+        });
+
+        // Event Listener
+        generateBtn.addEventListener('click', generateMonster);
+
+        // Initial Generate
+        generateMonster();
+    </script>
+</body>
+</html>
