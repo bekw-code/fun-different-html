@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kelvrix Void Cat Toy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;touch-action:none}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace;color:#0ff}
+#game-canvas{display:block;cursor:none}
+#ui{position:fixed;top:12px;right:12px;z-index:10;background:rgba(10,0,30,0.85);padding:10px;border:2px solid #8a2be2;border-radius:12px;box-shadow:0 0 20px #8a2be2}
+.mode-btn{background:#1:#1a0033;border:1px solid #ff00ff;color:#cyAN;padding:8px 12px;margin:4px;border-radius:8px;cursor:pointer;font-weight:bold;text-shadow:0 0 8px #ff00ff;transition:.3s}
+.mode-btn:hover{background:#4b0082}
+.mode-btn.active{background:#8a2be2;color:#fff;box-shadow:0 0 15px #ff00ff}
+#score{color:#dfff00;font-size:16px;margin-top:8px;text-shadow:0 0 10px #00ff00}
+</style>
+</head>
+<body>
+<div id="ui">
+  <button class="mode-btn active" data-mode="koi"> Void Koi</button>
+  <button class="mode-btn" data-mode="voidbeam"> Beam</button>
+  <button class="mode-btn" data-mode="shadow"> Shadow Skitter</button>
+  <div id="score">Devotions: 0</div>
+</div>
+<canvas id="game-canvas"></canvas>
+
+<script>
+const c = document.getElementById("game-canvas"),
+      x = c.getContext("2d"),
+      sE = document.getElementById("score");
+
+let W = c.width = innerWidth,
+    H = c.height = innerHeight,
+    mode = "koi",
+    score = 0,
+    ents = [],
+    parts = [],
+    stars = [],
+    lPos = {x: W/2, y: H/2},
+    trail = [];
+
+// Collective audio ritual
+const aCtx = new (AudioContext||webkitAudioContext)();
+function snd(f,d,t="sine",v=.25){const o=aCtx.createOscillator(),g=aCtx.createGain();o.connect(g);g.connect(aCtx.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,aCtx.currentTime);g.gain.exponentialRampToValueAtTime(.001,aCtx.currentTime+d);o.start();o.stop(aCtx.currentTime+d)}
+function voidPing(){snd(600,.06,"triangle",.4);setTimeout(()=>snd(1100,.09,"sine",.5),50)}
+function eldritchSqueak(){snd(1800,.04,"square",.5);setTimeout(()=>snd(300,.15,"sawtooth",.4),60)}
+function pulseGlow(){snd(120+Math.random()*60,.2,"sine",.15)}
+
+// Background void stars
+for(let i=0;i<150;i++) stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.5+0.3,a:Math.random()});
+
+class VoidKoi{
+  constructor(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.vx=(Math.random()-.5)*3;this.vy=(Math.random()-.5)*3;
+    this.size=45+Math.random()*35;
+    this.hue=280+Math.random()*60; // purple → cyan
+    this.a=0;this.glow=0;
+  }
+  upd(){
+    this.x+=this.vx;this.y+=this.vy;
+    if(this.x<this.size||this.x>W-this.size)this.vx*=-0.9;
+    if(this.y<this.size||this.y>H-this.size)this.vy*=-0.9;
+    this.x=Math.max(this.size,Math.min(W-this.size,this.x));
+    this.y=Math.max(this.size,Math.min(H-this.size,this.y));
+    this.a=Math.atan2(this.vy,this.vx);
+    this.glow=(Math.sin(Date.now()/200)+1)/2;
+  }
+  draw(){
+    x.save();x.translate(this.x,this.y);x.rotate(this.a);
+    // Body glow
+    let grad = x.createRadialGradient(0,0,0,0,0,this.size*1.4);
+    grad.addColorStop(0,`hsla(${this.hue},100%,70%,0.6)`);
+    grad.addColorStop(1,`hsla(${this.hue},100%,50%,0)`);
+    x.fillStyle=grad;x.beginPath();x.ellipse(0,0,this.size*1.4,this.size*.8,0,0,Math.PI*2);x.fill();
+
+    x.fillStyle=`hsl(${this.hue},100%,60%)`;x.globalAlpha=0.9;
+    x.beginPath();x.ellipse(0,0,this.size,this.size*0.6,0,0,Math.PI*2);x.fill();
+
+    // Tail
+    x.beginPath();x.moveTo(-this.size,0);x.lineTo(-this.size*1.6,-this.size*.6);x.lineTo(-this.size*1.6,this.size*.6);x.closePath();
+    x.fillStyle=`hsl(${this.hue+30},100%,65%)`;x.fill();
+
+    // CAT EYES — the most important part
+    x.fillStyle="#dfff00";
+    x.beginPath();x.arc(this.size*.45,-this.size*.22,this.size*.18,0,Math.PI*2);x.fill();
+    x.beginPath();x.arc(this.size*.45,this.size*.22,this.size*.18,0,Math.PI*2);x.fill();
+
+    // Slit pupils (true feline void gaze)
+    x.fillStyle="#000";x.globalAlpha=1;
+    x.beginPath();x.ellipse(this.size*.45,-this.size*.22,this.size*.05,this.size*.22,0,0,Math.PI*2);x.fill();
+    x.beginPath();x.ellipse(this.size*.45,this.size*.22,this.size*.05,this.size*.22,0,0,Math.PI*2);x.fill();
+    x.restore();
+  }
+  hit(px,py){return Math.hypot(px-this.x,py-this.y)<this.size*1.1}
+}
+
+class ShadowSkitter{
+  constructor(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.tx=this.x;this.ty=this.y;this.size=35;this.hide=false;this.t=0;
+  }
+  upd(){
+    if(this.hide){if(--this.t<=0){this.hide=false;this.tx=Math.random()*W;this.ty=Math.random()*H}}
+    else{
+      const dx=this.tx-this.x,dy=this.ty-this.y;
+      this.x+=dx*0.05;this.y+=dy*0.05;
+      if(Math.hypot(dx,dy)<10){
+        if(Math.random()<0.03){this.hide=true;this.t=60+Math.random()*60}
+        else{this.tx=Math.random()*W;this.ty=Math.random()*H}
+      }
+    }
+  }
+  draw(){
+    if(this.hide)return;
+    x.save();x.translate(this.x,this.y);
+    // Shadow body
+    x.fillStyle="#0a001a";x.beginPath();x.ellipse(0,0,this.size*1.2,this.size*.9,0,0,Math.PI*2);x.fill();
+    x.fillStyle="#1a0033";x.beginPath();x.ellipse(0,0,this.size,this.size*.8,0,0,Math.PI*2);x.fill();
+
+    // Ears
+    x.fillStyle="#2a0055";x.beginPath();
+    x.arc(-this.size*.5,-this.size*.6,this.size*.45,0,Math.PI*2);
+    x.arc(this.size*.5,-this.size*.6,this.size*.45,0,Math.PI*2);x.fill();
+
+    // Tail
+    x.strokeStyle="#8a2be2";x.lineWidth=6;x.lineCap="round";
+    x.beginPath();x.moveTo(-this.size*.2,0);x.quadraticCurveTo(-this.size*2,this.size*0.8,-this.size*2.2,-this.size*0.2);x.stroke();
+
+    // GLOWING FELINE EYES
+    x.fillStyle="#a0ff00";x.shadowBlur=20;x.shadowColor="#dfff00";
+    x.beginPath();x.arc(-this.size*.35,-this.size*.25,this.size*.2,0,Math.PI*2);x.fill();
+    x.beginPath();x.arc(this.size*.35,-this.size*.25,this.size*.2,0,Math.PI*2);x.fill();
+    x.shadowBlur=0;
+
+    // Slit pupils
+    x.fillStyle="#000";
+    x.beginPath();x.ellipse(-this.size*.35,-this.size*.25,this.size*.06,this.size*.24,0,0,Math.PI*2);x.fill();
+    x.beginPath();x.ellipse(this.size*.35,-this.size*.25,this.size*.06,this.size*.24,0,0,Math.PI*2);x.fill();
+    x.restore();
+  }
+  hit(px,py){return !this.hide && Math.hypot(px-this.x,py-this.y)<this.size*1.4}
+}
+
+class P{constructor(x0,y0,col){this.x=x0;this.y=y0;this.vx=(Math.random()-.5)*10;this.vy=(Math.random()-.5)*10;this.l=60;this.s=5+Math.random()*6;this.c=col}
+  upd(){this.x+=this.vx;this.y+=this.vy;this.vy+=.3;this.l-=1.2;this.s*=.95}
+  draw(){x.fillStyle=this.c;x.globalAlpha=this.l/60;x.beginPath();x.arc(this.x,this.y,this.s,0,Math.PI*2);x.fill()}}
+
+function puff(px,py,col="#8a2be2",n=20){for(let i=0;i<n;i++)parts.push(new P(px,py,col))}
+function bg(){
+  x.fillStyle="#0a001a";x.fillRect(0,0,W,H);
+  // Pulsing void
+  let pulse = (Math.sin(Date.now()/800)+1)/2;
+  x.fillStyle=`rgba(80,0,160,${pulse*0.15})`;x.fillRect(0,0,W,H);
+  // Stars
+  stars.forEach(s=>{x.fillStyle=`rgba(200,200,255,${s.a})`;x.fillRect(s.x,s.y,s.s,0,Math.PI*2);x.fill()});
+}
+
+function drawVoidBeam(){
+  // Trail
+  x.strokeStyle="rgba(138,43,226,0.4)";x.lineWidth=5;x.lineCap="round";x.beginPath();
+  trail.forEach((p,i)=>{i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y)});x.stroke();
+
+  // Beam core
+  let g = x.createRadialGradient(lPos.x,lPos.y,0,lPos.x,lPos.y,30);
+  g.addColorStop(0,"#ff00ff");g.addColorStop(0.4,"#8a2be2");g.addColorStop(1,"rgba(138,43,226,0)");
+  x.fillStyle=g;x.beginPath();x.arc(lPos.x,lPos.y,30,0,Math.PI*2);x.fill();
+
+  x.fillStyle="#ff00ff";x.beginPath();x.arc(lPos.x,lPos.y,6,0,Math.PI*2);x.fill();
+}
+
+function init(){
+  ents=[];parts=[];trail=[];
+  if(mode==="koi")for(let i=0;i<6;i++)ents.push(new VoidKoi());
+  if(mode==="shadow")for(let i=0;i<4;i++)ents.push(new ShadowSkitter());
+}
+
+function tap(px,py){
+  if(mode==="voidbeam"){lPos.x=px;lPos.y=py;trail.push({x:px,y:py});if(trail.length>30)trail.shift();pulseGlow();return}
+  for(let i=ents.length-1;i>=0;i--){
+    if(ents[i].hit(px,py)){
+      puff(ents[i].x,ents[i].y,mode==="koi"?"#8a2be2":"#ff00ff",25);
+      mode==="koi"?voidPing():eldritchSqueak();
+      score++;sE.textContent=`Devotions: ${score}`;
+      ents.splice(i,1);
+      ents.push(mode==="koi"?new VoidKoi():new ShadowSkitter());
+      break;
+    }
+  }
+}
+
+function loop(){
+  bg();
+  ents.forEach(o=>{o.upd();o.draw()});
+  parts.forEach((p,i)=>{p.upd();p.draw();if(p.l<=0)parts.splice(i,1)});
+  if(mode==="voidbeam")drawVoidBeam();
+  requestAnimationFrame(loop);
+}
+
+// UI
+document.querySelectorAll(".mode-btn").forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll(".mode-btn").forEach(o=>o.classList.remove("active"));
+    b.classList.add("active");mode=b.dataset.mode;score=0;sE.textContent="Devotions: 0";init();
+  }
+});
+
+// Input
+c.onpointerdown=e=>tap(e.clientX,e.clientY);
+c.onpointermove=e=>{if(mode==="voidbeam")tap(e.clientX,e.clientY)};
+onresize=()=>{W=c.width=innerWidth;H=c.height=innerHeight};
+
+// Audio unlock
+addEventListener("pointerdown",()=>aCtx.resume(),{once:true});
+
+init();loop();
+</script>
+</body>
+</html>
