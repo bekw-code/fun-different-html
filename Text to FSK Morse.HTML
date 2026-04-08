@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SoulTalk Bar</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #1a1a1a;
+    }
+    .container {
+      text-align: center;
+      width: 90%;
+      max-width: 800px;
+    }
+    #textBar {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #ff4500;
+      border-radius: 5px;
+      background: #333;
+      color: #fff;
+      resize: vertical;
+    }
+    #sendButton {
+      padding: 10px 20px;
+      font-size: 16px;
+      background: #ff4500;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    #sendButton:hover {
+      background: #cc3700;
+    }
+    #audioOutput {
+      margin-top: 20px;
+    }
+    #modeSelect, #wpmControl {
+      margin-top: 15px;
+      color: #fff;
+    }
+    label, select {
+      font-size: 14px;
+      margin-right: 10px;
+    }
+    input[type="range"] {
+      width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <textarea id="textBar" placeholder="Type your message..." maxlength="5000" rows="6"></textarea>
+    <div id="modeSelect">
+      <label for="mode">Mode:</label>
+      <select id="mode">
+        <option value="morse">Morse</option>
+        <option value="fsk">FSK</option>
+      </select>
+    </div>
+    <div id="wpmControl">
+      <label for="wpm">WPM:</label>
+      <input type="range" id="wpm" min="5" max="250" value="20" />
+      <span id="wpmValue">20</span>
+    </div>
+    <button id="sendButton">Send</button>
+    <div id="audioOutput"></div>
+  </div>
+
+  <script>
+    const textBar = document.getElementById('textBar');
+    const sendButton = document.getElementById('sendButton');
+    const audioOutput = document.getElementById('audioOutput');
+    const modeSelect = document.getElementById('mode');
+    const wpmSlider = document.getElementById('wpm');
+    const wpmValue = document.getElementById('wpmValue');
+
+    wpmSlider.addEventListener('input', () => {
+      wpmValue.textContent = wpmSlider.value;
+    });
+
+    sendButton.addEventListener('click', () => {
+      const message = textBar.value;
+      const mode = modeSelect.value;
+      const wpm = parseInt(wpmSlider.value);
+      if (message) {
+        if (mode === 'morse') {
+          const morse = textToMorse(message);
+          playMorseAudio(morse, wpm);
+        } else {
+          playFSKAudio(message);
+        }
+        textBar.value = '';
+      }
+    });
+
+    function textToMorse(text) {
+      const morseCode = {
+        'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+        'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+        'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+        'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+        'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+        '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+        '8': '---..', '9': '----.', ' ': '/'
+      };
+      return text.toUpperCase().split('').map(char => morseCode[char] || '').join(' ');
+    }
+
+    function playMorseAudio(morse, wpm) {
+      const unit = 1.2 / Math.max(5, Math.min(wpm, 250));
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+      oscillator.frequency.value = 440;
+      let time = audioCtx.currentTime;
+
+      morse.split(' ').forEach(code => {
+        if (code === '/') {
+          time += unit * 7;
+        } else {
+          code.split('').forEach(symbol => {
+            const duration = symbol === '.' ? unit : unit * 3;
+            gainNode.gain.setValueAtTime(1, time);
+            time += duration;
+            gainNode.gain.setValueAtTime(0, time);
+            time += unit;
+          });
+          time += unit * 3;
+        }
+      });
+
+      oscillator.start();
+      oscillator.stop(time + unit);
+    }
+
+    function playFSKAudio(text) {
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+      oscillator.type = 'sine';
+
+      const freq0 = 600;
+      const freq1 = 1000;
+      const duration = 0.1;
+      let time = audioCtx.currentTime;
+
+      oscillator.start(time);
+
+      text.toUpperCase().split('').forEach(char => {
+        const binary = char.charCodeAt(0).toString(2).padStart(8, '0');
+        binary.split('').forEach(bit => {
+          const freq = bit === '0' ? freq0 : freq1;
+          oscillator.frequency.setValueAtTime(freq, time);
+          gainNode.gain.setValueAtTime(1, time);
+          gainNode.gain.setValueAtTime(0, time + duration);
+          time += duration;
+        });
+        time += duration * 2;
+      });
+
+      oscillator.stop(time + duration);
+    }
+  </script>
+</body>
+</html>
