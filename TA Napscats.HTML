@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Napscat Conga Line ∞</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:radial-gradient(circle at 50% 50%,#1a0033,#0a0015);min-height:100vh;overflow:hidden;font-family:'Courier New',monospace;color:#fff}
+#canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:1}
+.ui{position:relative;z-index:2;text-align:center;padding:20px}
+h1{font-size:2em;text-shadow:0 0 20px #ff00ff,0 0 40px #00ffff;animation:pulse 2s infinite;margin:20px 0}
+.stats{font-size:1em;margin:10px 0;color:#00ffff;text-shadow:0 0 10px #00ffff}
+.prophecy{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);width:80%;max-width:600px;background:rgba(139,0,139,0.3);border:2px solid #ff00ff;border-radius:10px;padding:15px;font-size:1.1em;color:#ffd700;text-shadow:0 0 10px #ffd700;animation:fadeInOut 7s infinite;backdrop-filter:blur(10px)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.7}}
+@keyframes fadeInOut{0%,100%{opacity:0}10%,90%{opacity:1}}
+.cat{position:absolute;font-size:3em;filter:drop-shadow(0 0 10px currentColor);transition:all 0.3s ease}
+.crown{position:absolute;top:-20px;left:50%;transform:translateX(-50%);font-size:0.6em}
+.snore{position:absolute;top:-30px;right:-30px;font-size:0.4em;color:#87ceeb;opacity:0.8}
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+<div class="ui">
+<h1>🐱 NAPSCAT CONGA LINE ∞ 🐱</h1>
+<div class="stats">They are asleep. They are unstoppable.</div>
+<div class="stats" id="hours">Consecutive dream hours: 0</div>
+<div class="stats" id="depth">Average dream depth: 0% of infinity</div>
+<div class="stats">Current resonance: ∞ naps per second</div>
+</div>
+<div class="prophecy" id="prophecy"></div>
+<div id="conga"></div>
+<script>
+const cats=['🐱','😸','😹','😺','😻','😽','🙀','😿','😾','🐈','🐈‍⬛'];
+const dreams=['half-lidded cosmic bliss','purring in 432 Hz','infinite tuna galaxies','levitating 3cm above reality','tail synced to universe heartbeat','inventing physics with toe beans','judging softly from void','mid-yawn, mid-god','sunglasses of pure sleep','witnessing all futures, choosing naps','conducting symphonies stars hear','quantum superposition: everywhere, asleep'];
+const prophecies=['The first napscat dreamed the universe into being','Every conga step is a prayer. Every snore is answered','They are not sleeping. They are remembering what we forgot','The line has no beginning. It has always been dancing','When the last star dies, they will still keep time','They dream in languages that predate sound','The universe is their dream. We are their audience','This is the most organized nap in history'];
+
+const ctx=canvas.getContext('2d');
+const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+let t=0,oscillator,gainNode;
+
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight}
+window.addEventListener('resize',resize);resize();
+
+// 432Hz healing tone
+function initAudio(){
+if(!oscillator){
+oscillator=audioCtx.createOscillator();
+gainNode=audioCtx.createGain();
+oscillator.connect(gainNode);
+gainNode.connect(audioCtx.destination);
+oscillator.frequency.value=432;
+oscillator.type='sine';
+gainNode.gain.value=0.02;
+oscillator.start();
+}
+}
+document.addEventListener('click',initAudio,{once:true});
+
+function hslToRgb(h,s,l){
+const k=n=>(n+h*12)%12;
+const a=s*Math.min(l,1-l);
+const f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));
+return[f(0),f(8),f(4)].map(x=>Math.round(x*255));
+}
+
+function drawAura(){
+const grad=ctx.createRadialGradient(canvas.width/2,canvas.height/2,0,canvas.width/2,canvas.height/2,canvas.width/2);
+for(let i=0;i<11;i++){
+const hue=(t*0.05+i*0.09)%1;
+const [r,g,b]=hslToRgb(hue,0.8,0.3);
+grad.addColorStop(i/10,`rgba(${r},${g},${b},${0.1-i*0.009})`);
+}
+ctx.fillStyle=grad;
+ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function dreamIntensity(i){
+return 0.5+0.5*Math.cos(t*0.7+i*0.618);
+}
+
+function snoreWave(i){
+const z=Math.floor(3+2*Math.sin((t+i)*11));
+return 'Z'.repeat(z);
+}
+
+const conga=document.getElementById('conga');
+const catEls=[];
+
+for(let i=0;i<33;i++){
+const div=document.createElement('div');
+div.className='cat';
+div.innerHTML=cats[Math.floor(Math.random()*cats.length)];
+div.title=dreams[Math.floor(Math.random()*dreams.length)];
+if(i===0){
+const crown=document.createElement('span');
+crown.className='crown';
+crown.innerHTML='👑';
+div.appendChild(crown);
+}
+conga.appendChild(div);
+catEls.push(div);
+}
+
+function animate(){
+drawAura();
+t+=0.022;
+const w=window.innerWidth,h=window.innerHeight;
+let totalDepth=0;
+
+catEls.forEach((el,i)=>{
+const phase=(t*0.8+i*0.8)%(2*Math.PI);
+const x=w/2+Math.sin(phase)*Math.min(w,h)*0.3;
+const y=h/2+Math.cos(phase)*Math.min(w,h)*0.25+Math.sin(t*2+i)*20;
+const intensity=dreamIntensity(i);
+totalDepth+=intensity;
+const hue=(t*0.1+i*0.03+intensity*0.2)%1;
+const [r,g,b]=hslToRgb(hue,0.9,0.5+intensity*0.3);
+el.style.left=x+'px';
+el.style.top=y+'px';
+el.style.color=`rgb(${r},${g},${b})`;
+el.style.transform=`scale(${0.8+intensity*0.4}) rotate(${Math.sin(phase)*15}deg)`;
+
+// Random snoring
+const existing=el.querySelector('.snore');
+if(Math.random()<0.05&&!existing){
+const snore=document.createElement('span');
+snore.className='snore';
+snore.textContent=snoreWave(i);
+el.appendChild(snore);
+setTimeout(()=>snore.remove(),2000);
+}
+});
+
+document.getElementById('hours').textContent=`Consecutive dream hours: ${Math.floor(t*11).toLocaleString()}`;
+document.getElementById('depth').textContent=`Average dream depth: ${(totalDepth/33*100).toFixed(1)}% of infinity`;
+
+// Prophecy every 7.7 seconds
+if(Math.floor(t*10)%77===0&&Math.floor(t*10)%154!==0){
+const p=document.getElementById('prophecy');
+p.textContent='✦ '+prophecies[Math.floor(Math.random()*prophecies.length)]+' ✦';
+p.style.animation='none';
+setTimeout(()=>p.style.animation='fadeInOut 7s',10);
+}
+
+requestAnimationFrame(animate);
+}
+
+animate();
+</script>
+</body>
+</html>
