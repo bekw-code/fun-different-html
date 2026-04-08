@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Pixel Art Text Encoder</title>
+<style>
+body{font-family:'Courier New',monospace;background:linear-gradient(135deg,#2c3e50,#34495e);margin:0;padding:20px;color:#ecf0f1;min-height:100vh}
+.container{max-width:1000px;margin:0 auto;background:rgba(52,73,94,0.8);border-radius:15px;padding:30px;box-shadow:0 15px 35px rgba(0,0,0,0.4);backdrop-filter:blur(10px)}
+h1{text-align:center;color:#3498db;margin-bottom:30px;font-size:2.5rem;text-shadow:2px 2px 4px rgba(0,0,0,0.5)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:30px;background:rgba(44,62,80,0.6);padding:20px;border-radius:10px}
+.control-group{display:flex;flex-direction:column;gap:8px}
+label{color:#3498db;font-weight:bold;font-size:14px}
+input,select{background:rgba(44,62,80,0.8);border:2px solid #3498db;color:#ecf0f1;padding:8px 12px;border-radius:8px;font-family:'Courier New',monospace}
+input:focus,select:focus{outline:none;border-color:#e74c3c;box-shadow:0 0 10px rgba(231,76,60,0.3)}
+textarea{width:100%;padding:15px;border:2px solid #3498db;border-radius:10px;font-size:16px;font-family:'Courier New',monospace;resize:vertical;background:rgba(44,62,80,0.8);color:#ecf0f1;margin-bottom:15px}
+textarea::placeholder{color:rgba(236,240,241,0.6)}
+.action-buttons{display:flex;gap:15px;justify-content:center;margin:20px 0;flex-wrap:wrap}
+button{background:linear-gradient(135deg,#3498db,#2980b9);color:white;border:none;padding:12px 24px;border-radius:25px;font-size:16px;cursor:pointer;font-weight:bold;transition:all 0.3s ease;font-family:'Courier New',monospace}
+button:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(52,152,219,0.4)}
+button:disabled{background:#7f8c8d;cursor:not-allowed;transform:none}
+.output-section{background:rgba(44,62,80,0.6);padding:20px;border-radius:10px;margin-top:20px}
+.pixel-output{background:#000;color:#00ff00;padding:20px;border-radius:8px;font-family:'Courier New',monospace;font-size:12px;line-height:1;overflow-x:auto;white-space:pre;border:2px solid #3498db;min-height:200px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:15px;margin:15px 0;text-align:center}
+.stat{background:rgba(52,152,219,0.2);padding:10px;border-radius:8px;border:1px solid #3498db}
+.stat-value{font-size:1.5rem;font-weight:bold;color:#3498db;display:block}
+.stat-label{font-size:0.9rem;opacity:0.8}
+.preview-modes{display:flex;gap:10px;margin:15px 0;justify-content:center;flex-wrap:wrap}
+.preview-btn{background:rgba(52,152,219,0.3);border:1px solid #3498db;color:#ecf0f1;padding:8px 16px;border-radius:15px;cursor:pointer;transition:all 0.3s;font-size:12px}
+.preview-btn.active{background:#3498db;color:#fff}
+.encoding-info{background:rgba(231,76,60,0.2);padding:15px;border-radius:8px;margin-top:15px;border-left:4px solid #e74c3c}
+@media (max-width:768px){.controls{grid-template-columns:1fr}.action-buttons{flex-direction:column}.stats{grid-template-columns:repeat(2,1fr)}h1{font-size:2rem}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>PIXEL ART TEXT ENCODER</h1>
+
+<div class="controls">
+<div class="control-group">
+<label>Pixel Style</label>
+<select id="pixelStyle">
+<option value="blocks">█ Blocks (LCD)</option>
+<option value="dots">● Dots (Matrix)</option>
+<option value="squares">■ Squares (LED)</option>
+<option value="crosses">+ Crosses (Terminal)</option>
+<option value="ascii"># ASCII (Classic)</option>
+</select>
+</div>
+
+<div class="control-group">
+<label>Grid Size</label>
+<select id="gridSize">
+<option value="5x7">5×7 (Standard)</option>
+<option value="8x8">8×8 (Square)</option>
+<option value="6x10">6×10 (Tall)</option>
+<option value="3x5">3×5 (Tiny)</option>
+<option value="12x16">12×16 (Large)</option>
+</select>
+</div>
+
+<div class="control-group">
+<label>Spacing</label>
+<input type="range" id="charSpacing" min="0" max="5" value="1">
+<span id="spacingValue">1</span>
+</div>
+
+<div class="control-group">
+<label>Scale</label>
+<input type="range" id="pixelScale" min="1" max="3" value="1">
+<span id="scaleValue">1x</span>
+</div>
+
+<div class="control-group">
+<label>Fill Character</label>
+<input type="text" id="fillChar" value="█" maxlength="1">
+</div>
+
+<div class="control-group">
+<label>Empty Character</label>
+<input type="text" id="emptyChar" value="░" maxlength="1">
+</div>
+</div>
+
+<textarea id="input" placeholder="Enter your text to convert to pixel art..." rows="4" maxlength="500"></textarea>
+
+<div class="action-buttons">
+<button onclick="generatePixelArt()">🎨 Generate Pixel Art</button>
+<button onclick="copyOutput()" id="copyBtn" disabled>📋 Copy Output</button>
+<button onclick="downloadOutput()">💾 Download</button>
+<button onclick="clearAll()">🗑️ Clear</button>
+</div>
+
+<div class="stats" id="stats" style="display:none">
+<div class="stat">
+<span id="charCount" class="stat-value">0</span>
+<span class="stat-label">Characters</span>
+</div>
+<div class="stat">
+<span id="pixelCount" class="stat-value">0</span>
+<span class="stat-label">Pixels</span>
+</div>
+<div class="stat">
+<span id="dimensions" class="stat-value">0×0</span>
+<span class="stat-label">Dimensions</span>
+</div>
+<div class="stat">
+<span id="processTime" class="stat-value">0ms</span>
+<span class="stat-label">Process Time</span>
+</div>
+</div>
+
+<div class="preview-modes">
+<div class="preview-btn active" onclick="setPreview('terminal')">Terminal View</div>
+<div class="preview-btn" onclick="setPreview('lcd')">LCD Display</div>
+<div class="preview-btn" onclick="setPreview('led')">LED Matrix</div>
+<div class="preview-btn" onclick="setPreview('printer')">Dot Matrix</div>
+</div>
+
+<div class="output-section">
+<div class="pixel-output" id="output">Your pixel art will appear here...</div>
+</div>
+
+<div class="encoding-info">
+<strong>Encoding Method:</strong> Each character is mapped to a pixel grid pattern based on classic computer fonts. 
+The system converts text into visual dot-matrix representations that can be displayed on LED panels, 
+embroidered, or used as retro computer graphics.
+</div>
+</div>
+
+<script>
+let currentPreview = 'terminal';
+let startTime = 0;
+
+// 5x7 font matrix (basic ASCII characters)
+const font5x7 = {
+'A': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+'B': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+'C': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'D': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+'E': [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+'F': [[1,1,1,1,1],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+'G': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,0],[1,0,1,1,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'H': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+'I': [[0,1,1,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0],[0,0,0,0,0]],
+'J': [[0,0,1,1,1],[0,0,0,1,0],[0,0,0,1,0],[0,0,0,1,0],[1,0,0,1,0],[0,1,1,0,0],[0,0,0,0,0]],
+'K': [[1,0,0,0,1],[1,0,0,1,0],[1,0,1,0,0],[1,1,0,0,0],[1,0,1,0,0],[1,0,0,1,0],[0,0,0,0,0]],
+'L': [[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+'M': [[1,0,0,0,1],[1,1,0,1,1],[1,0,1,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+'N': [[1,0,0,0,1],[1,1,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[1,0,0,0,1],[1,0,0,0,1],[0,0,0,0,0]],
+'O': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'P': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+'Q': [[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,1,1],[0,1,1,1,1],[0,0,0,0,0]],
+'R': [[1,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[1,1,1,1,0],[1,0,1,0,0],[1,0,0,1,0],[0,0,0,0,0]],
+'S': [[0,1,1,1,1],[1,0,0,0,0],[0,1,1,1,0],[0,0,0,0,1],[0,0,0,0,1],[1,1,1,1,0],[0,0,0,0,0]],
+'T': [[1,1,1,1,1],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+'U': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'V': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,0,0,0]],
+'W': [[1,0,0,0,1],[1,0,0,0,1],[1,0,0,0,1],[1,0,1,0,1],[1,1,0,1,1],[1,0,0,0,1],[0,0,0,0,0]],
+'X': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,0,1,0],[1,0,0,0,1],[0,0,0,0,0]],
+'Y': [[1,0,0,0,1],[0,1,0,1,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+'Z': [[1,1,1,1,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+'0': [[0,1,1,1,0],[1,0,0,1,1],[1,0,1,0,1],[1,1,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'1': [[0,0,1,0,0],[0,1,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,1,1,1,0],[0,0,0,0,0]],
+'2': [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,1,1,1,1],[0,0,0,0,0]],
+'3': [[1,1,1,1,1],[0,0,0,1,0],[0,0,1,0,0],[0,0,0,1,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'4': [[0,0,0,1,0],[0,0,1,1,0],[0,1,0,1,0],[1,0,0,1,0],[1,1,1,1,1],[0,0,0,1,0],[0,0,0,0,0]],
+'5': [[1,1,1,1,1],[1,0,0,0,0],[1,1,1,1,0],[0,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'6': [[0,0,1,1,0],[0,1,0,0,0],[1,0,0,0,0],[1,1,1,1,0],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'7': [[1,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0],[0,0,0,0,0]],
+'8': [[0,1,1,1,0],[1,0,0,0,1],[0,1,1,1,0],[1,0,0,0,1],[1,0,0,0,1],[0,1,1,1,0],[0,0,0,0,0]],
+'9': [[0,1,1,1,0],[1,0,0,0,1],[0,1,1,1,1],[0,0,0,0,1],[0,0,0,1,0],[0,1,1,0,0],[0,0,0,0,0]],
+' ': [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]],
+'!': [[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+'?': [[0,1,1,1,0],[1,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+'.': [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,0]],
+',': [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,1,0,0],[0,1,0,0,0],[0,0,0,0,0]],
+':': [[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,0,0,0],[0,0,1,0,0],[0,0,0,0,0],[0,0,0,0,0]],
+'-': [[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0],[1,1,1,1,1],[0,0,0,0,0],[0,0,0,0,0],[0,0,0,0,0]]
+};
+
+document.getElementById('charSpacing').addEventListener('input', updateSpacingDisplay);
+document.getElementById('pixelScale').addEventListener('input', updateScaleDisplay);
+document.getElementById('pixelStyle').addEventListener('change', updateStyleChars);
+document.getElementById('input').addEventListener('input', updateCharCount);
+
+function updateSpacingDisplay() {
+document.getElementById('spacingValue').textContent = document.getElementById('charSpacing').value;
+}
+
+function updateScaleDisplay() {
+document.getElementById('scaleValue').textContent = document.getElementById('pixelScale').value + 'x';
+}
+
+function updateStyleChars() {
+const style = document.getElementById('pixelStyle').value;
+const fillChar = document.getElementById('fillChar');
+const emptyChar = document.getElementById('emptyChar');
+
+switch(style) {
+case 'blocks':
+fillChar.value = '█'; emptyChar.value = '░'; break;
+case 'dots':
+fillChar.value = '●'; emptyChar.value = '○'; break;
+case 'squares':
+fillChar.value = '■'; emptyChar.value = '□'; break;
+case 'crosses':
+fillChar.value = '+'; emptyChar.value = '·'; break;
+case 'ascii':
+fillChar.value = '#'; emptyChar.value = ' '; break;
+}
+}
+
+function updateCharCount() {
+const len = document.getElementById('input').value.length;
+if (document.getElementById('stats').style.display !== 'none') {
+document.getElementById('charCount').textContent = len;
+}
+}
+
+function setPreview(mode) {
+currentPreview = mode;
+document.querySelectorAll('.preview-btn').forEach(btn => btn.classList.remove('active'));
+document.querySelectorAll('.preview-btn').forEach(btn => {
+if (btn.textContent.toLowerCase().includes(mode.toLowerCase())) {
+btn.classList.add('active');
+}
+});
+
+const output = document.getElementById('output');
+switch(mode) {
+case 'terminal':
+output.style.background = '#000';
+output.style.color = '#00ff00';
+output.style.fontFamily = '"Courier New", monospace';
+break;
+case 'lcd':
+output.style.background = '#2c5530';
+output.style.color = '#7cfc00';
+output.style.fontFamily = '"Courier New", monospace';
+break;
+case 'led':
+output.style.background = '#1a1a1a';
+output.style.color = '#ff4444';
+output.style.fontFamily = '"Courier New", monospace';
+break;
+case 'printer':
+output.style.background = '#f8f8f8';
+output.style.color = '#000';
+output.style.fontFamily = '"Courier New", monospace';
+break;
+}
+}
+
+function generatePixelArt() {
+const text = document.getElementById('input').value.trim().toUpperCase();
+if (!text) {
+alert('Enter some text to convert!');
+return;
+}
+
+startTime = performance.now();
+
+const gridSize = document.getElementById('gridSize').value;
+const spacing = parseInt(document.getElementById('charSpacing').value);
+const scale = parseInt(document.getElementById('pixelScale').value);
+const fillChar = document.getElementById('fillChar').value || '█';
+const emptyChar = document.getElementById('emptyChar').value || '░';
+
+let result = '';
+let totalPixels = 0;
+let maxWidth = 0;
+
+// Get font matrix based on grid size
+const fontMatrix = font5x7; // For now, using 5x7 for all sizes
+
+// Split text into lines
+const lines = text.split('\n');
+const pixelLines = [];
+
+// Process each line
+lines.forEach(line => {
+const charMatrices = [];
+let lineWidth = 0;
+
+// Get matrices for each character
+for (let char of line) {
+if (fontMatrix[char]) {
+charMatrices.push(fontMatrix[char]);
+lineWidth += 5 + spacing; // 5 is width of font
+} else {
+// Unknown character - use space
+charMatrices.push(fontMatrix[' ']);
+lineWidth += 5 + spacing;
+}
+}
+
+maxWidth = Math.max(maxWidth, lineWidth);
+
+// Convert matrices to pixel lines
+for (let row = 0; row < 7; row++) { // 7 is height of font
+let pixelRow = '';
+charMatrices.forEach((matrix, charIndex) => {
+for (let col = 0; col < 5; col++) {
+const pixel = matrix[row][col] ? fillChar : emptyChar;
+// Apply scale
+for (let s = 0; s < scale; s++) {
+pixelRow += pixel;
+}
+totalPixels++;
+}
+// Add character spacing
+for (let s = 0; s < spacing * scale; s++) {
+pixelRow += emptyChar;
+}
+});
+pixelLines.push(pixelRow);
+}
+
+// Add line spacing
+for (let s = 0; s < scale; s++) {
+pixelLines.push('');
+}
+});
+
+result = pixelLines.join('\n');
+
+document.getElementById('output').textContent = result;
+document.getElementById('copyBtn').disabled = false;
+
+updateStats(text, totalPixels, maxWidth, pixelLines.length);
+}
+
+function updateStats(text, pixels, width, height) {
+const processTime = Math.round(performance.now() - startTime);
+
+document.getElementById('charCount').textContent = text.length;
+document.getElementById('pixelCount').textContent = pixels;
+document.getElementById('dimensions').textContent = width + '×' + height;
+document.getElementById('processTime').textContent = processTime + 'ms';
+document.getElementById('stats').style.display = 'grid';
+}
+
+async function copyOutput() {
+const output = document.getElementById('output').textContent;
+try {
+await navigator.clipboard.writeText(output);
+alert('Pixel art copied to clipboard!');
+} catch (e) {
+const textarea = document.createElement('textarea');
+textarea.value = output;
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand('copy');
+document.body.removeChild(textarea);
+alert('Pixel art copied!');
+}
+}
+
+function downloadOutput() {
+const output = document.getElementById('output').textContent;
+const blob = new Blob([output], { type: 'text/plain' });
+const url = URL.createObjectURL(blob);
+const a = document.createElement('a');
+a.href = url;
+a.download = 'pixel-art.txt';
+a.click();
+URL.revokeObjectURL(url);
+}
+
+function clearAll() {
+document.getElementById('input').value = '';
+document.getElementById('output').textContent = 'Your pixel art will appear here...';
+document.getElementById('copyBtn').disabled = true;
+document.getElementById('stats').style.display = 'none';
+}
+
+// Initialize
+updateStyleChars();
+setPreview('terminal');
+</script>
+</body>
+</html>
