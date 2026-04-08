@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Harmonic Synth Healing 2.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&display=swap');
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: radial-gradient(ellipse at 50% 26%, #fff8ff 0%, #294b82 66%, #120021 100%);
+            font-family: 'Orbitron', monospace;
+        }
+        canvas { position: absolute; left:0; top:0; width:100vw; height:100vh;}
+        .ui {
+            position: absolute; width: 100vw; pointer-events: none; z-index: 1;
+        }
+        .title {
+            text-align: center;
+            margin-top: 38px;
+            color: #f4ff99;
+            font-size: 2.6vw;
+            font-weight: 700;
+            letter-spacing: 0.19em;
+            text-shadow: 0 0 34px #02ffef, 0 0 8px #fff, 0 0 80px #fbffc8;
+            opacity: 0.94;
+        }
+        .info {
+            position: absolute; top: 24px; left: 28px; color: #00ffff;
+            font-size: 1.08em; text-shadow: 0 0 10px #0ff, 0 0 4px #fff;
+            font-weight: 700; opacity: 0.84;
+        }
+        .instructions {
+            position: absolute;
+            bottom: 32px; right: 32px;
+            text-align: right;
+            color: #ff3cae;
+            font-size: 1em;
+            text-shadow: 0 0 16px #ff3cae;
+            opacity: 0.93;
+        }
+    </style>
+</head>
+<body>
+<canvas id="synth-canvas"></canvas>
+<div class="ui">
+    <div class="title">✦ Neon Harmonic Healing ✦</div>
+    <div class="info" id="stat-panel">
+        BPM: <span id="bpm">20</span> <br>
+        Bass: <span id="bass">50</span> Hz<br>
+        Chord: <span id="chordname">Cmaj9</span><br>
+        Intensity: <span id="power">0</span>%
+    </div>
+    <div class="instructions">
+        HOLD: Raise Intensity<br>
+        TAP: Switch Bass & Chord<br>
+        DOUBLE-TAP: Reset<br>
+        Headphones Recommended!
+    </div>
+</div>
+<script>
+    // More melodic and harmonic healing chords (maj7, maj9, sus9, min9)
+    const synthChords = [
+        {name: "Cmaj9", notes: [65.41, 82.41, 98.00, 123.47, 146.83]}, // Cmaj9
+        {name: "Fmaj7", notes: [87.31, 110.00, 130.81, 164.81]}, // Fmaj7
+        {name: "Amin9", notes: [55.00, 65.41, 98.00, 116.54, 147.83]}, // Amin9
+        {name: "Dsus2", notes: [73.42, 87.31, 116.54, 147.83]}, // Dsus2
+        {name: "Esus9", notes: [82.41, 98.00, 123.47, 146.83]}, // Esus9
+        {name: "GMaj9", notes: [98.00,123.47,146.83,196.00,246.94]}, // GMaj9
+    ];
+    const bassFreqs = [50, 55, 65.41, 73.42, 82.41, 98];
+    let chordIndex = 0, bassIndex = 0, bpm = 20, intensity = 0.02, power = 0, patternStep = 0;
+    let lastTap = 0, holdStart = 0, isHolding = false;
+
+    function updateStats() {
+        document.getElementById('bpm').textContent = Math.round(bpm);
+        document.getElementById('bass').textContent = bassFreqs[bassIndex];
+        document.getElementById('chordname').textContent = synthChords[chordIndex].name;
+        document.getElementById('power').textContent = Math.round(power*100) || 0;
+    }
+
+    // Interaction Handlers
+    function startHold(e) {
+        e.preventDefault();
+        holdStart = performance.now();
+        isHolding = true;
+    }
+    function endHold(e) {
+        e.preventDefault();
+        isHolding = false;
+        let now = performance.now();
+        if (now - lastTap < 350) { // double tap resets
+            chordIndex = 0; bassIndex = 0; bpm = 20; intensity = 0.02; power = 0;
+        } else {
+            bassIndex = (bassIndex+1)%bassFreqs.length;
+            chordIndex = (chordIndex+1)%synthChords.length;
+        }
+        lastTap = now;
+    }
+    window.addEventListener("mousedown", startHold);
+    window.addEventListener("mouseup", endHold);
+    window.addEventListener("touchstart", startHold, {passive: false});
+    window.addEventListener("touchend", endHold, {passive: false});
+    window.addEventListener("touchcancel", endHold);
+
+    // Synth Engine: layered oscillators per chord, LFO/panning, filter sweeps for warmth
+    let audioCtx = null, masterGain = null, oscLayers = [];
+    function createSynth() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            masterGain = audioCtx.createGain();
+            masterGain.gain.value = 0.18;
+            masterGain.connect(audioCtx.destination);
+        }
+        stopSynth();
+        let chordNotes = synthChords[chordIndex].notes;
+        oscLayers = chordNotes.map((note, i) => {
+            let osc = audioCtx.createOscillator();
+            osc.type = i % 2 ? 'triangle' : 'sawtooth';
+            osc.frequency.value = note + (bassFreqs[bassIndex]*intensity*.8*(i+1));
+            osc.detune.value = Math.sin(power*5+i*1.9)*10 + intensity*24*(i-1.5);
+            let gain = audioCtx.createGain();
+            gain.gain.value = 0.09 + intensity*0.12 + Math.sin(patternStep+i)*0.01;
+            let filter = audioCtx.createBiquadFilter();
+            filter.type = "lowpass";
+            filter.frequency.value = 520 + intensity*780;
+            filter.Q.value = 11 + intensity*8;
+            osc.connect(filter); filter.connect(gain); gain.connect(masterGain);
+
+            // Pan for stereo lushness
+            let pan = audioCtx.createStereoPanner();
+            pan.pan.value = (-0.5 + i/(chordNotes.length-1));
+            gain.connect(pan); pan.connect(masterGain);
+
+            osc.start();
+            return {osc, gain, pan, note};
+        });
+    }
+    function stopSynth() {
+        oscLayers.forEach(pair => {
+            try{pair.osc.stop();}catch{}
+        });
+        oscLayers = [];
+    }
+
+    // Beat Pulse/Sequencer: more rhythmic, melodic sequence
+    let beatTimer = performance.now();
+    function pulseSynth() {
+        if (!audioCtx) return;
+        let now = audioCtx.currentTime;
+
+        oscLayers.forEach((pair, i) => {
+            let beat = (patternStep % oscLayers.length === i);
+            let sweep = 0.13 + intensity*(beat?0.12:0.06);
+            pair.gain.gain.setValueAtTime(sweep, now);
+            pair.osc.frequency.setValueAtTime(
+                pair.note + (bassFreqs[bassIndex]*intensity*0.8*(i+1)) + Math.sin(now*1.7+i*1.2)*14,
+                now
+            );
+            pair.pan.pan.value = Math.sin(patternStep*0.7+i*0.6) * 0.6;
+        });
+    }
+
+    // Visuals: Cosmic grid, floating neon shapes, undulating chord emblem, sparkles
+    const canvas = document.getElementById("synth-canvas");
+    const ctx = canvas.getContext("2d");
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    let retroParticles = Array(40).fill().map(() => ({
+        x: Math.random()*canvas.width,
+        y: Math.random()*canvas.height,
+        dx: (Math.random()-0.5)*1.1,
+        dy: (Math.random()-0.5)*1.4,
+        r: 9+Math.random()*44,
+        clr: ["#b1faff","#f4ff99","#ff3cae","#fbffc8","#ffa38a"][Math.floor(Math.random()*5)],
+        life: Math.random()
+    }));
+    function drawScene() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+
+        // Cosmic grid lines
+        for(let i=0;i<12;i++) {
+            let y=canvas.height*0.66 + i*28;
+            ctx.save();
+            ctx.globalAlpha = 0.17+0.025*i;
+            ctx.strokeStyle=["#f4ff99","#2cf4ff"][i%2];
+            ctx.shadowBlur=14; ctx.shadowColor="#f4ff99";
+            ctx.beginPath();
+            ctx.moveTo(0, y); ctx.lineTo(canvas.width, y);
+            ctx.lineWidth = 2.7 + i * 0.13;
+            ctx.stroke();
+            ctx.restore();
+        }
+        // Floating shapes & sparkles
+        retroParticles.forEach(p=>{
+            ctx.save();
+            ctx.globalAlpha=0.19+p.life*0.55;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, p.r*(.84+Math.sin(power*8.5+p.y*0.05)*0.27), 0, Math.PI*2);
+            ctx.strokeStyle= p.clr;
+            ctx.shadowBlur=20; ctx.shadowColor=p.clr;
+            ctx.lineWidth=3.2+p.life*2;
+            ctx.stroke();
+
+            // Sparkles
+            ctx.fillStyle="#f4ff99";
+            ctx.globalAlpha=0.18+Math.abs(Math.cos(performance.now()*0.0015+p.x))*0.31;
+            ctx.beginPath();
+            ctx.arc(p.x+(p.life-0.5)*22, p.y+(p.life-0.5)*22, 2.7, 0, Math.PI*2);
+            ctx.fill();
+            ctx.restore();
+
+            p.x+=p.dx*(1.05+power*0.6); p.y+=p.dy*(1.02+power*0.5);
+            p.life+=Math.random()*0.02-0.011;
+            if(p.x<0||p.x>canvas.width||p.y<0||p.y>canvas.height||p.life<0.01||p.life>1.1){
+                p.x=Math.random()*canvas.width;p.y=Math.random()*canvas.height;p.life=Math.random();
+            }
+        });
+
+        // Chord Emblem
+        let cx = canvas.width/2, cy = canvas.height*0.29;
+        let sz = 75 + Math.sin(performance.now() * 0.0013)*15 + power*55;
+
+        ctx.save();
+        ctx.globalAlpha=0.32+power*0.48;
+        ctx.beginPath();
+        ctx.arc(cx, cy, sz, 0, Math.PI*2);
+        ctx.strokeStyle="#f4ff99";
+        ctx.shadowBlur=44; ctx.lineWidth=9-power*5.5;
+        ctx.shadowColor="#f4ff99";
+        ctx.stroke();
+        ctx.restore();
+
+        // Vertical ray glow
+        for(let i=0; i<4; i++){
+            ctx.save();
+            ctx.globalAlpha=0.11+power*0.11;
+            ctx.beginPath();
+            ctx.moveTo(cx+i*26-56, cy-sz-30);
+            ctx.lineTo(cx+i*26-56, cy+sz+42);
+            ctx.strokeStyle="#b1faff";
+            ctx.lineWidth=8-i;
+            ctx.shadowBlur=30;
+            ctx.stroke();
+            ctx.restore();
+        }
+    }
+
+    // Main loop: Slow intensity ramp, wide BPM, responsive synth
+    function mainLoop(){
+        // Slow intensity dial: gentle ramp over several seconds
+        if(isHolding){
+            let t = Math.max(0,(performance.now()-holdStart)*0.00018);
+            intensity = Math.min(1, 0.03 + t*(0.13+0.18*Math.sin(t/3)));
+            bpm = 20 + Math.floor(intensity*130); // Range 20-150
+            power = intensity;
+            createSynth();
+        }
+        updateStats();
+        drawScene();
+        let now = performance.now();
+        if(audioCtx && now-beatTimer > 60000/bpm){
+            patternStep = (patternStep+1)%synthChords[chordIndex].notes.length;
+            pulseSynth();
+            beatTimer=now;
+        }
+        requestAnimationFrame(mainLoop);
+    }
+
+    window.onload=function(){
+        createSynth();
+        mainLoop();
+    };
+    window.onblur=function(){ stopSynth(); };
+</script>
+</body>
+</html>
