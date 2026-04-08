@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primal Drums</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+            color: #fff; 
+            font-family: 'Arial Black', Arial, sans-serif; 
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        .container { 
+            padding: 10px; 
+            max-width: 100vw;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 10px;
+            backdrop-filter: blur(10px);
+        }
+        .title {
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            background: linear-gradient(45deg, #ff6b35, #f7931e, #ffcc02);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        .master-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .master-btn {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(231,76,60,0.4);
+            transition: all 0.3s;
+            min-width: 80px;
+        }
+        .master-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(231,76,60,0.6); }
+        .master-btn.active { background: linear-gradient(45deg, #27ae60, #2ecc71); box-shadow: 0 4px 15px rgba(46,204,113,0.4); }
+        .drums-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+        .drum-row {
+            background: rgba(255,255,255,0.05);
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(5px);
+        }
+        .drum-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .drum-name {
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            flex: 1;
+        }
+        .drum-toggle {
+            background: #e74c3c;
+            border: none;
+            width: 50px;
+            height: 30px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .drum-toggle.active { background: #27ae60; }
+        .drum-toggle::after {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 3px;
+            transition: all 0.3s;
+        }
+        .drum-toggle.active::after { left: 23px; }
+        .drum-controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .control-group {
+            background: rgba(0,0,0,0.3);
+            padding: 6px;
+            border-radius: 8px;
+        }
+        .control-label {
+            font-size: 11px;
+            margin-bottom: 4px;
+            opacity: 0.8;
+        }
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b35, #f7931e);
+            cursor: pointer;
+        }
+        .beat-display {
+            display: flex;
+            gap: 2px;
+            margin-top: 6px;
+        }
+        .beat-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.1s;
+        }
+        .beat-dot.active { 
+            background: #ff6b35;
+            box-shadow: 0 0 8px #ff6b35;
+        }
+        @media (max-width: 480px) {
+            .title { font-size: 20px; }
+            .master-btn { padding: 10px 15px; font-size: 12px; }
+            .drum-name { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="title">🥁 PRIMAL DRUMS 🥁</div>
+            <div class="master-controls">
+                <button class="master-btn" id="playBtn">▶ PLAY</button>
+                <button class="master-btn" id="randomBtn">🎲 RANDOM</button>
+                <button class="master-btn" id="syncBtn">🔄 SYNC</button>
+            </div>
+        </div>
+
+        <div class="drums-grid" id="drumsContainer"></div>
+    </div>
+
+    <script>
+        class PrimalDrums {
+            constructor() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.isPlaying = false;
+                this.isRandom = false;
+                this.isSync = false;
+                this.beatCount = 0;
+                this.masterGain = this.audioContext.createGain();
+                this.masterGain.gain.value = 5.0; // MASSIVE master volume boost!
+                this.masterGain.connect(this.audioContext.destination);
+                
+                this.drums = [
+                    { name: 'KICK-139', freq: 139, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-93', freq: 93, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-69', freq: 69, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-46', freq: 46, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-35', freq: 35, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-23', freq: 23, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 },
+                    { name: 'KICK-15', freq: 15, active: true, tempo: 120, volume: 0.9, pattern: [], lastHit: 0 }
+                ];
+                
+                this.init();
+                this.generatePatterns();
+            }
+
+            init() {
+                this.createUI();
+                this.bindEvents();
+                this.startLoop();
+            }
+
+            createUI() {
+                const container = document.getElementById('drumsContainer');
+                this.drums.forEach((drum, i) => {
+                    const row = document.createElement('div');
+                    row.className = 'drum-row';
+                    row.innerHTML = `
+                        <div class="drum-header">
+                            <div class="drum-name">${drum.name}</div>
+                            <button class="drum-toggle ${drum.active ? 'active' : ''}" data-drum="${i}"></button>
+                        </div>
+                        <div class="drum-controls">
+                            <div class="control-group">
+                                <div class="control-label">TEMPO: ${drum.tempo}</div>
+                                <input type="range" class="slider tempo-slider" min="0" max="200" value="${drum.tempo}" data-drum="${i}">
+                            </div>
+                            <div class="control-group">
+                                <div class="control-label">VOLUME: ${Math.round(drum.volume*100)}%</div>
+                                <input type="range" class="slider volume-slider" min="0" max="1" step="0.1" value="${drum.volume}" data-drum="${i}">
+                            </div>
+                        </div>
+                        <div class="beat-display" id="beats-${i}">
+                            ${'<div class="beat-dot"></div>'.repeat(16)}
+                        </div>
+                    `;
+                    container.appendChild(row);
+                });
+            }
+
+            bindEvents() {
+                document.getElementById('playBtn').onclick = () => this.togglePlay();
+                document.getElementById('randomBtn').onclick = () => this.toggleRandom();
+                document.getElementById('syncBtn').onclick = () => this.toggleSync();
+
+                document.querySelectorAll('.drum-toggle').forEach(btn => {
+                    btn.onclick = (e) => {
+                        const i = parseInt(e.target.dataset.drum);
+                        this.drums[i].active = !this.drums[i].active;
+                        e.target.classList.toggle('active');
+                    };
+                });
+
+                document.querySelectorAll('.tempo-slider').forEach(slider => {
+                    slider.oninput = (e) => {
+                        const i = parseInt(e.target.dataset.drum);
+                        this.drums[i].tempo = parseInt(e.target.value);
+                        e.target.parentElement.querySelector('.control-label').textContent = `TEMPO: ${e.target.value}`;
+                    };
+                });
+
+                document.querySelectorAll('.volume-slider').forEach(slider => {
+                    slider.oninput = (e) => {
+                        const i = parseInt(e.target.dataset.drum);
+                        this.drums[i].volume = parseFloat(e.target.value);
+                        e.target.parentElement.querySelector('.control-label').textContent = `VOLUME: ${Math.round(e.target.value*100)}%`;
+                    };
+                });
+            }
+
+            generatePatterns() {
+                this.drums.forEach(drum => {
+                    drum.pattern = [];
+                    for(let i = 0; i < 16; i++) {
+                        drum.pattern.push(Math.random() > 0.6);
+                    }
+                });
+            }
+
+            togglePlay() {
+                this.isPlaying = !this.isPlaying;
+                const btn = document.getElementById('playBtn');
+                btn.textContent = this.isPlaying ? '⏸ STOP' : '▶ PLAY';
+                btn.classList.toggle('active');
+                if(this.isPlaying && this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            }
+
+            toggleRandom() {
+                this.isRandom = !this.isRandom;
+                document.getElementById('randomBtn').classList.toggle('active');
+                this.generatePatterns(); // Always regenerate when toggled
+            }
+
+            toggleSync() {
+                this.isSync = !this.isSync;
+                document.getElementById('syncBtn').classList.toggle('active');
+            }
+
+            createDrumSound(freq, type) {
+                const osc = this.audioContext.createOscillator();
+                const gain = this.audioContext.createGain();
+                const filter = this.audioContext.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+                
+                // MAXIMUM BOOM POWER!
+                osc.frequency.setValueAtTime(freq, this.audioContext.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq * 0.2, this.audioContext.currentTime + 0.2);
+                gain.gain.setValueAtTime(15.0, this.audioContext.currentTime); // EXTREME boost!
+                gain.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 1.2);
+                filter.frequency.value = freq * 0.7;
+                filter.type = 'lowpass';
+                filter.Q.value = 3;
+                osc.type = 'sine';
+                
+                osc.start();
+                osc.stop(this.audioContext.currentTime + 1.5);
+                return gain;
+            }
+
+            playDrum(drum, volume = 1) {
+                const gain = this.createDrumSound(drum.freq, drum.name);
+                gain.gain.value *= drum.volume * volume;
+            }
+
+            updateBeats() {
+                this.drums.forEach((drum, drumIndex) => {
+                    const beats = document.getElementById(`beats-${drumIndex}`).children;
+                    for(let i = 0; i < beats.length; i++) {
+                        beats[i].classList.remove('active');
+                    }
+                    beats[this.beatCount % 16].classList.toggle('active', drum.active && (this.isSync || drum.pattern[this.beatCount % 16]));
+                });
+            }
+
+            startLoop() {
+                setInterval(() => {
+                    if(!this.isPlaying) return;
+                    
+                    const now = this.audioContext.currentTime * 1000;
+                    
+                    this.drums.forEach((drum, i) => {
+                        if(!drum.active) return;
+                        
+                        const interval = 60000 / drum.tempo / 4;
+                        
+                        if(now - drum.lastHit >= interval && drum.tempo > 0) {
+                            let shouldPlay = false;
+                            
+                            if(this.isSync) {
+                                shouldPlay = this.beatCount % 4 === 0;
+                            } else if(this.isRandom) {
+                                shouldPlay = Math.random() > 0.7;
+                            } else {
+                                shouldPlay = drum.pattern[this.beatCount % 16];
+                            }
+                            
+                            if(shouldPlay) {
+                                this.playDrum(drum);
+                            }
+                            
+                            drum.lastHit = now;
+                        }
+                    });
+                    
+                    this.beatCount++;
+                    this.updateBeats();
+                    
+                    if(this.isRandom && this.beatCount % 32 === 0) {
+                        this.generatePatterns();
+                    }
+                }, 100);
+            }
+        }
+
+        window.addEventListener('load', () => new PrimalDrums());
+    </script>
+</body>
+</html>
