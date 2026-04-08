@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Cat Toy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;touch-action:none}
+body{overflow:hidden;font-family:Arial,sans-serif}
+#game-canvas{display:block;cursor:none}
+#ui{position:fixed;top:10px;right:10px;z-index:10;background:rgba(0,0,0,.6);padding:6px 8px;border-radius:6px;color:#fff;font-size:11px}
+.mode-btn{background:#ff4500;border:0;color:#fff;padding:4px 8px;margin:2px;border-radius:4px;cursor:pointer;font-size:11px}
+.mode-btn.active{background:#ff1493}
+#score{margin-top:4px;font-weight:bold;color:#0f0;font-size:12px}
+</style></head><body>
+<div id="ui">
+  <button class="mode-btn active" data-mode="fish">🐟 Fish</button>
+  <button class="mode-btn" data-mode="laser">🔴 Laser</button>
+  <button class="mode-btn" data-mode="mouse">🐭 Mouse</button>
+  <div id="score">Catches: 0</div>
+</div>
+<canvas id="game-canvas"></canvas>
+<script>
+const c=document.getElementById("game-canvas"),x=c.getContext("2d"),sE=document.getElementById("score");
+let W=c.width=innerWidth,H=c.height=innerHeight,mode="fish",score=0,ents=[],parts=[],lPos={x:W/2,y:H/2},trail=[];
+const aCtx=new (AudioContext||webkitAudioContext)();
+function snd(f,d,t="sine",v=.3){const o=aCtx.createOscillator(),g=aCtx.createGain();o.connect(g);g.connect(aCtx.destination);o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,aCtx.currentTime);g.gain.exponentialRampToValueAtTime(.01,aCtx.currentTime+d);o.start();o.stop(aCtx.currentTime+d)}
+function catchPing(){snd(800,.08,"sine");setTimeout(()=>snd(1200,.08,"sine"),40)}
+function yokeSqueak(){snd(2000,.03,"square",.4);setTimeout(()=>snd(800,.09,"sawtooth",.3),25);setTimeout(()=>snd(150,.12,"square",.25),70)}
+function bubble(){snd(400+Math.random()*200,.15+Math.random()*0.05,"sine",.25)}
+class Fish{
+ constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.vx=(Math.random()-.5)*4;this.vy=(Math.random()-.5)*4;this.size=40+Math.random()*30;this.color=["#ff6b6b","#ffa500","#ffff00","#4ecdc4"][0|Math.random()*4];this.a=0}
+ upd(){this.x+=this.vx;this.y+=this.vy; if(this.x<this.size||this.x>W-this.size)this.vx*=-1; if(this.y<this.size||this.y>H-this.size)this.vy*=-1; this.x=Math.max(this.size,Math.min(W-this.size,this.x));this.y=Math.max(this.size,Math.min(H-this.size,this.y));this.a=Math.atan2(this.vy,this.vx)}
+ draw(){x.save();x.translate(this.x,this.y);x.rotate(this.a);
+  x.fillStyle=this.color;x.beginPath();x.ellipse(0,0,this.size,this.size*.6,0,0,Math.PI*2);x.fill();
+  x.beginPath();x.moveTo(-this.size,0);x.lineTo(-this.size*1.5,-this.size*.5);x.lineTo(-this.size*1.5,this.size*.5);x.closePath();x.fill();
+  x.fillStyle="#fff";x.beginPath();x.arc(this.size*.4,-this.size*.2,this.size*.15,0,Math.PI*2);x.fill();
+  x.fillStyle="#000";x.beginPath();x.arc(this.size*.4,-this.size*.2,this.size*.08,0,Math.PI*2);x.fill();
+  x.restore()}
+ hit(px,py){return Math.hypot(px-this.x,py-this.y)<this.size}
+}
+class Mouse{
+ constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.tx=this.x;this.ty=this.y;this.size=30;this.c="#8b4513";this.hide=false;this.t=0}
+ upd(){if(this.hide){if(--this.t<=0){this.hide=false;this.tx=Math.random()*W;this.ty=Math.random()*H}}
+ else{const dx=this.tx-this.x,dy=this.ty-this.y;this.x+=dx*0.04;this.y+=dy*0.04;if(Math.abs(dx)<8&&Math.abs(dy)<8){if(Math.random()<.02){this.hide=true;this.t=40+Math.random()*40}else{this.tx=Math.random()*W;this.ty=Math.random()*H}}}}
+ draw(){if(this.hide)return;x.save();x.translate(this.x,this.y);
+  x.fillStyle=this.c;x.beginPath();x.ellipse(0,0,this.size,this.size*.8,0,0,Math.PI*2);x.fill();
+  x.beginPath();x.arc(-this.size*.5,-this.size*.7,this.size*.4,0,Math.PI*2);x.arc(this.size*.5,-this.size*.7,this.size*.4,0,Math.PI*2);x.fill();
+  x.strokeStyle=this.c;x.lineWidth=3;x.beginPath();x.moveTo(-this.size,0);x.quadraticCurveTo(-this.size*2,this.size,-this.size*2.5,-this.size*.5);x.stroke();
+  x.fillStyle="#000";x.beginPath();x.arc(-this.size*.3,-this.size*.3,this.size*.18,0,Math.PI*2);x.arc(this.size*.3,-this.size*.3,this.size*.18,0,Math.PI*2);x.fill();
+  x.restore()}
+ hit(px,py){return !this.hide&&Math.hypot(px-this.x,py-this.y)<this.size*1.5}
+}
+class P{constructor(x0,y0,col){this.x=x0;this.y=y0;this.vx=(Math.random()-.5)*8;this.vy=(Math.random()-.5)*8;this.l=50;this.s=4+Math.random()*4;this.c=col}
+ upd(){this.x+=this.vx;this.y+=this.vy;this.vy+=.2;this.l--;this.s*=.96}
+ draw(){x.fillStyle=this.c;x.globalAlpha=this.l/50;x.beginPath();x.arc(this.x,this.y,this.s,0,Math.PI*2);x.fill();x.globalAlpha=1}}
+function puff(px,py,col,n=15){for(let i=0;i<n;i++)parts.push(new P(px,py,col))}
+function bg(){
+ if(mode==="fish"){
+  const g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"#0077be");g.addColorStop(1,"#003d5c");x.fillStyle=g;x.fillRect(0,0,W,H);
+ }else if(mode==="laser"){
+  x.fillStyle="#111";x.fillRect(0,0,W,H);
+ }else{
+  x.fillStyle="#d4a373";x.fillRect(0,0,W,H);
+ }}
+function drawLaser(){
+ x.strokeStyle="rgba(255,0,0,.3)";x.lineWidth=3;x.beginPath();
+ trail.forEach((p,i)=>{i?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y)});x.stroke();
+ const r=15,g=x.createRadialGradient(lPos.x,lPos.y,0,lPos.x,lPos.y,r);
+ g.addColorStop(0,"rgba(255,0,0,1)");g.addColorStop(.5,"rgba(255,0,0,.5)");g.addColorStop(1,"rgba(255,0,0,0)");
+ x.fillStyle=g;x.beginPath();x.arc(lPos.x,lPos.y,r,0,Math.PI*2);x.fill();
+ x.fillStyle="#f00";x.beginPath();x.arc(lPos.x,lPos.y,3,0,Math.PI*2);x.fill();
+}
+function init(){
+ ents=[];parts=[];trail=[];
+ if(mode==="fish")for(let i=0;i<5;i++)ents.push(new Fish());
+ if(mode==="mouse")for(let i=0;i<3;i++)ents.push(new Mouse());
+}
+function tap(px,py){
+ if(mode==="laser"){lPos.x=px;lPos.y=py;trail.push({x:px,y:py});trail.length>20&&trail.shift();return}
+ for(let i=ents.length-1;i>=0;i--){
+  const e=ents[i];if(e.hit(px,py)){
+   puff(e.x,e.y,e.c||"#fff",18);
+   if(mode==="fish"){catchPing();bubble()}else yokeSqueak();
+   score++;sE.textContent="Catches: "+score;
+   ents.splice(i,1);ents.push(mode==="fish"?new Fish():new Mouse());break;
+ }}}
+function loop(){
+ bg();
+ ents.forEach(o=>{o.upd();o.draw()});
+ if(mode==="laser"){
+  lPos.x=Math.max(0,Math.min(W,lPos.x+(Math.random()-.5)*10));
+  lPos.y=Math.max(0,Math.min(H,lPos.y+(Math.random()-.5)*10));
+  trail.push({x:lPos.x,y:lPos.y});trail.length>20&&trail.shift();drawLaser();
+ }
+ for(let i=parts.length-1;i>=0;i--){parts[i].upd();parts[i].draw();if(parts[i].l<=0)parts.splice(i,1)}
+ requestAnimationFrame(loop)
+}
+document.querySelectorAll(".mode-btn").forEach(b=>b.onclick=()=>{document.querySelectorAll(".mode-btn").forEach(o=>o.classList.remove("active"));b.classList.add("active");mode=b.dataset.mode;score=0;sE.textContent="Catches: 0";init()});
+c.onmousedown=e=>tap(e.clientX,e.clientY);
+c.ontouchstart=e=>{e.preventDefault();for(const t of e.touches)tap(t.clientX,t.clientY)};
+c.onmousemove=e=>{if(mode==="laser")tap(e.clientX,e.clientY)};
+c.ontouchmove=e=>{e.preventDefault();if(mode==="laser")for(const t of e.touches)tap(t.clientX,t.clientY)};
+onresize=()=>{W=c.width=innerWidth;H=c.height=innerHeight};
+init();loop();
+addEventListener("click",()=>aCtx.resume(),{once:true});
+addEventListener("touchstart",()=>aCtx.resume(),{once:true});
+</script></body></html>
