@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Life in Weeks - Sovereign Memento Mori</title>
+    <style>
+        body { background: #111; color: #eee; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+        h1 { color: #ff5555; }
+        #grid { display: grid; grid-template-columns: repeat(52, 12px); gap: 4px; justify-content: center; margin: 40px auto; max-width: 800px; }
+        .week { width: 12px; height: 12px; background: #333; border-radius: 3px; cursor: pointer; transition: all 0.3s; }
+        .week.lived { background: #ff5555; box-shadow: 0 0 8px #ff5555; }
+        .week:hover { transform: scale(1.4); }
+        #info { margin: 30px; font-size: 1.2em; }
+        input, button { padding: 10px; margin: 10px; font-size: 1em; }
+        #birthdate { padding: 8px; }
+    </style>
+</head>
+<body>
+    <h1>Your Life in Weeks</h1>
+    <p>Set your birthdate (once), then click weeks you've lived. Persistent. Sovereign. Shared across local HTMLs.</p>
+    
+    <label>Birthdate: <input type="date" id="birthdate"></label>
+    <button onclick="saveBirthdate()">Save Birthdate</button>
+    <button onclick="exportData()">Export JSON</button>
+    <button onclick="importData()">Import JSON</button>
+    
+    <div id="grid"></div>
+    
+    <div id="info">
+        Weeks lived: <span id="lived">0</span><br>
+        Weeks remaining (90 years): <span id="remaining">4680</span><br>
+        Percentage lived: <span id="percent">0%</span>
+    </div>
+
+    <script>
+        const WEEKS_PER_YEAR = 52;
+        const MAX_YEARS = 90;
+        const TOTAL_WEEKS = MAX_YEARS * WEEKS_PER_YEAR;
+        const DATA_KEY = 'lifeInWeeks_data'; // Same key = shared across files!
+
+        let birthdate = null;
+        let livedWeeks = new Set();
+
+        function loadData() {
+            const saved = localStorage.getItem(DATA_KEY);
+            if (saved) {
+                const data = JSON.parse(saved);
+                birthdate = data.birthdate ? new Date(data.birthdate) : null;
+                livedWeeks = new Set(data.livedWeeks || []);
+                if (birthdate) document.getElementById('birthdate').value = birthdate.toISOString().split('T')[0];
+            }
+        }
+
+        function saveData() {
+            const data = {
+                birthdate: birthdate ? birthdate.toISOString() : null,
+                livedWeeks: Array.from(livedWeeks)
+            };
+            localStorage.setItem(DATA_KEY, JSON.stringify(data));
+        }
+
+        function saveBirthdate() {
+            const input = document.getElementById('birthdate').value;
+            if (input) {
+                birthdate = new Date(input);
+                alert('Birthdate saved. Now click the weeks you\'ve lived (from top-left).');
+                renderGrid();
+                saveData();
+            }
+        }
+
+        function calculateLivedWeeks() {
+            if (!birthdate) return 0;
+            const today = new Date();
+            const msDiff = today - birthdate;
+            return Math.floor(msDiff / (1000 * 60 * 60 * 24 * 7));
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            const autoLived = birthdate ? calculateLivedWeeks() : 0;
+
+            for (let i = 0; i < TOTAL_WEEKS; i++) {
+                const week = document.createElement('div');
+                week.classList.add('week');
+                if (livedWeeks.has(i) || (!birthdate && livedWeeks.has(i))) {
+                    week.classList.add('lived');
+                }
+                week.onclick = () => {
+                    week.classList.toggle('lived');
+                    if (week.classList.contains('lived')) {
+                        livedWeeks.add(i);
+                    } else {
+                        livedWeeks.delete(i);
+                    }
+                    updateInfo();
+                    saveData();
+                };
+                grid.appendChild(week);
+            }
+
+            // Auto-fill up to today if birthdate set
+            if (birthdate) {
+                for (let i = 0; i < autoLived && i < TOTAL_WEEKS; i++) {
+                    grid.children[i].classList.add('lived');
+                    livedWeeks.add(i);
+                }
+            }
+
+            updateInfo();
+        }
+
+        function updateInfo() {
+            const lived = livedWeeks.size;
+            const remaining = TOTAL_WEEKS - lived;
+            const percent = ((lived / TOTAL_WEEKS) * 100).toFixed(2);
+            document.getElementById('lived').textContent = lived;
+            document.getElementById('remaining').textContent = remaining;
+            document.getElementById('percent').textContent = percent + '%';
+        }
+
+        function exportData() {
+            const data = localStorage.getItem(DATA_KEY);
+            if (data) {
+                const blob = new Blob([data], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'life-in-weeks.json';
+                a.click();
+            }
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = event => {
+                    try {
+                        localStorage.setItem(DATA_KEY, event.target.result);
+                        loadData();
+                        renderGrid();
+                        alert('Data imported. Refresh if needed.');
+                    } catch (err) {
+                        alert('Invalid file.');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+
+        // Init
+        loadData();
+        renderGrid();
+    </script>
+</body>
+</html>
