@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Binaural Beat Constructor</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body{background:linear-gradient(135deg,#0f0f23,#1a1a2e,#16213e);color:#fff;font-family:'Arial',sans-serif;height:100vh;overflow:hidden}
+.container{display:flex;height:100vh;padding:20px;gap:20px}
+.main-section{flex:1;background:rgba(0,0,0,0.4);border-radius:15px;padding:30px;border:1px solid #333;display:flex;flex-direction:column}
+.controls-section{width:380px;background:rgba(0,0,0,0.4);border-radius:15px;padding:30px;border:1px solid #333;overflow-y:auto}
+h1{text-align:center;color:#00ffff;margin-bottom:25px;font-size:2.2rem;text-shadow:3px 3px 6px rgba(0,0,0,0.7)}
+.binaural-display{flex:1;background:rgba(0,0,0,0.6);border-radius:12px;padding:25px;border:1px solid #444;position:relative;overflow:hidden}
+.wave-canvas{width:100%;height:300px;border:1px solid #333;border-radius:8px;background:#000}
+.frequency-bars{display:flex;justify-content:space-between;margin:20px 0;gap:10px}
+.freq-bar{flex:1;background:rgba(0,255,255,0.1);border-radius:8px;padding:15px;text-align:center;border:1px solid #0ff}
+.freq-value{font-size:1.8rem;font-weight:bold;color:#0ff}
+.freq-label{font-size:0.9rem;color:#ccc;margin-top:5px}
+.beat-frequency{text-align:center;margin:20px 0;padding:20px;background:rgba(255,0,255,0.2);border-radius:12px;border:1px solid #ff00ff}
+.beat-freq-value{font-size:2.5rem;font-weight:bold;color:#ff00ff}
+.beat-label{font-size:1.1rem;color:#ddd;margin-top:8px}
+.brain-state-indicator{margin-top:20px;padding:20px;border-radius:12px;text-align:center;font-size:1.3rem;font-weight:bold;transition:all 0.5s}
+.transport{display:flex;gap:15px;justify-content:center;margin-top:auto;padding-top:25px}
+.transport button{padding:15px 25px;font-size:16px;font-weight:bold}
+.control-panel{background:rgba(0,0,0,0.6);border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid #444}
+.panel-title{color:#0ff;font-size:16px;font-weight:bold;margin-bottom:15px;text-align:center}
+.control-group{margin-bottom:20px}
+.control-group label{display:block;color:#0ff;font-size:14px;margin-bottom:8px;font-weight:bold}
+.slider-container{position:relative}
+input[type="range"]{width:100%;height:25px;background:#1a1a2e;border:2px solid #0ff;border-radius:6px;outline:none;cursor:pointer}
+input[type="range"]::-webkit-slider-thumb{appearance:none;width:25px;height:25px;background:linear-gradient(45deg,#0ff,#00cccc);border-radius:50%;cursor:pointer}
+.value-display{text-align:center;color:#fff;font-weight:bold;margin-top:8px;font-size:14px}
+select{background:#1a1a2e;border:2px solid #0ff;color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;width:100%}
+button{background:linear-gradient(45deg,#ff6b6b,#ee5a24);border:none;color:#fff;padding:12px 20px;border-radius:8px;cursor:pointer;font-weight:bold;transition:all 0.3s;font-size:14px}
+button:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(255,107,107,0.4)}
+button:disabled{background:#666;cursor:not-allowed;transform:none}
+.preset-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:15px 0}
+.preset-btn{background:rgba(0,255,255,0.2);border:1px solid #0ff;padding:12px;font-size:12px;border-radius:6px}
+.preset-btn:hover{background:rgba(0,255,255,0.3)}
+.stats-panel{background:rgba(0,0,0,0.6);border-radius:12px;padding:20px;border:1px solid #444}
+.stat-row{display:flex;justify-content:space-between;margin:8px 0;font-size:14px}
+.stat-label{color:#0ff}
+.stat-value{color:#fff;font-weight:bold}
+.warning{background:rgba(255,255,0,0.2);border:1px solid #ffff00;border-radius:8px;padding:15px;margin:15px 0;font-size:13px;line-height:1.4}
+.warning-title{color:#ffff00;font-weight:bold;margin-bottom:5px}
+.visualization{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;border-radius:12px;overflow:hidden}
+@media (max-width: 1200px) {
+.container { flex-direction: column; height: auto; overflow-y: auto; }
+.controls-section { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="main-section">
+<h1>BINAURAL BEAT CONSTRUCTOR</h1>
+
+<div class="binaural-display">
+<div class="visualization" id="visualization"></div>
+
+<canvas class="wave-canvas" id="waveCanvas"></canvas>
+
+<div class="frequency-bars">
+<div class="freq-bar">
+<div class="freq-value" id="leftFreq">200.0</div>
+<div class="freq-label">LEFT EAR (Hz)</div>
+</div>
+<div class="freq-bar">
+<div class="freq-value" id="rightFreq">210.0</div>
+<div class="freq-label">RIGHT EAR (Hz)</div>
+</div>
+</div>
+
+<div class="beat-frequency">
+<div class="beat-freq-value" id="beatFreq">10.0</div>
+<div class="beat-label">BINAURAL BEAT FREQUENCY (Hz)</div>
+</div>
+
+<div class="brain-state-indicator" id="brainState">
+ALPHA STATE - RELAXED AWARENESS
+</div>
+</div>
+
+<div class="transport">
+<button onclick="initializeAndStart()">START/STOP</button>
+<button onclick="addDrumPattern()">ADD DRUMS</button>
+<button onclick="togglePulse()">PULSE MODE</button>
+<button onclick="resetSystem()">RESET</button>
+</div>
+</div>
+
+<div class="controls-section">
+<div class="control-panel">
+<div class="panel-title">Frequency Control</div>
+<div class="control-group">
+<label>Base Frequency</label>
+<div class="slider-container">
+<input type="range" id="baseFreq" min="80" max="800" value="200" step="0.1">
+<div class="value-display"><span id="baseFreqValue">200.0</span> Hz</div>
+</div>
+</div>
+
+<div class="control-group">
+<label>Beat Frequency</label>
+<div class="slider-container">
+<input type="range" id="beatFreqSlider" min="0.5" max="40" value="10" step="0.1">
+<div class="value-display"><span id="beatFreqValue">10.0</span> Hz</div>
+</div>
+</div>
+
+<div class="control-group">
+<label>Volume</label>
+<div class="slider-container">
+<input type="range" id="volume" min="0" max="100" value="50">
+<div class="value-display"><span id="volumeValue">50</span>%</div>
+</div>
+</div>
+</div>
+
+<div class="control-panel">
+<div class="panel-title">Brain Wave Presets</div>
+<div class="preset-grid">
+<button class="preset-btn" onclick="setPreset('delta')">DELTA<br>0.5-4 Hz<br>Deep Sleep</button>
+<button class="preset-btn" onclick="setPreset('theta')">THETA<br>4-8 Hz<br>Meditation</button>
+<button class="preset-btn" onclick="setPreset('alpha')">ALPHA<br>8-13 Hz<br>Relaxation</button>
+<button class="preset-btn" onclick="setPreset('beta')">BETA<br>13-30 Hz<br>Focus</button>
+<button class="preset-btn" onclick="setPreset('gamma')">GAMMA<br>30-40 Hz<br>Awareness</button>
+<button class="preset-btn" onclick="setPreset('focus')">FOCUS<br>15 Hz<br>Concentration</button>
+</div>
+</div>
+
+<div class="control-panel">
+<div class="panel-title">Drum Pattern Settings</div>
+<div class="control-group">
+<label>Drum Style</label>
+<select id="drumStyle">
+<option value="kick">Deep Kick</option>
+<option value="pulse">Pulse Beat</option>
+<option value="tribal">Tribal</option>
+<option value="electronic">Electronic</option>
+</select>
+</div>
+
+<div class="control-group">
+<label>Drum Tempo</label>
+<div class="slider-container">
+<input type="range" id="drumTempo" min="60" max="140" value="90">
+<div class="value-display"><span id="drumTempoValue">90</span> BPM</div>
+</div>
+</div>
+
+<div class="control-group">
+<label>Drum Volume</label>
+<div class="slider-container">
+<input type="range" id="drumVolume" min="0" max="100" value="30">
+<div class="value-display"><span id="drumVolumeValue">30</span>%</div>
+</div>
+</div>
+</div>
+
+<div class="stats-panel">
+<div class="stat-row">
+<span class="stat-label">Left Frequency:</span>
+<span class="stat-value" id="leftFreqStat">200.0 Hz</span>
+</div>
+<div class="stat-row">
+<span class="stat-label">Right Frequency:</span>
+<span class="stat-value" id="rightFreqStat">210.0 Hz</span>
+</div>
+<div class="stat-row">
+<span class="stat-label">Beat Frequency:</span>
+<span class="stat-value" id="beatFreqStat">10.0 Hz</span>
+</div>
+<div class="stat-row">
+<span class="stat-label">Brain State:</span>
+<span class="stat-value" id="brainStateStat">Alpha</span>
+</div>
+<div class="stat-row">
+<span class="stat-label">Session Time:</span>
+<span class="stat-value" id="sessionTime">00:00</span>
+</div>
+</div>
+
+<div class="warning">
+<div class="warning-title">Safety Notice</div>
+Use binaural beats responsibly. Start with lower volumes and shorter sessions. 
+Avoid use while driving or operating machinery. Discontinue if you experience 
+discomfort, headaches, or unusual sensations.
+</div>
+</div>
+</div>
+
+<script>
+let audioCtx = null;
+let leftOsc = null, rightOsc = null;
+let leftGain = null, rightGain = null;
+let merger = null, masterGain = null;
+let isPlaying = false;
+let audioInitialized = false;
+let sessionStartTime = 0;
+let sessionTimer = null;
+
+// Drum system
+let drumOscs = [];
+let drumGains = [];
+let drumInterval = null;
+let drumEnabled = false;
+let pulseMode = false;
+
+// Wave visualization
+let waveCanvas = null;
+let waveCtx = null;
+let animationId = null;
+
+// Brain wave mappings
+const brainWaves = {
+delta: { min: 0.5, max: 4, name: 'DELTA STATE', description: 'DEEP SLEEP & RECOVERY', color: '#4a0080' },
+theta: { min: 4, max: 8, name: 'THETA STATE', description: 'DEEP MEDITATION & CREATIVITY', color: '#0066cc' },
+alpha: { min: 8, max: 13, name: 'ALPHA STATE', description: 'RELAXED AWARENESS', color: '#00cc66' },
+beta: { min: 13, max: 30, name: 'BETA STATE', description: 'FOCUSED ATTENTION', color: '#ff9900' },
+gamma: { min: 30, max: 40, name: 'GAMMA STATE', description: 'HEIGHTENED AWARENESS', color: '#ff0066' }
+};
+
+async function initializeAndStart() {
+if (!audioInitialized) {
+await initAudio();
+}
+togglePlayback();
+}
+
+async function initAudio() {
+try {
+audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+if (audioCtx.state === 'suspended') {
+await audioCtx.resume();
+}
+
+// Create stereo setup
+merger = audioCtx.createChannelMerger(2);
+masterGain = audioCtx.createGain();
+
+// Left channel oscillator
+leftOsc = audioCtx.createOscillator();
+leftGain = audioCtx.createGain();
+leftOsc.type = 'sine';
+leftGain.gain.value = 0;
+
+// Right channel oscillator  
+rightOsc = audioCtx.createOscillator();
+rightGain = audioCtx.createGain();
+rightOsc.type = 'sine';
+rightGain.gain.value = 0;
+
+// Connect audio chain
+leftOsc.connect(leftGain);
+rightOsc.connect(rightGain);
+leftGain.connect(merger, 0, 0);  // Left channel
+rightGain.connect(merger, 0, 1); // Right channel
+merger.connect(masterGain);
+masterGain.connect(audioCtx.destination);
+
+// Set initial frequencies
+updateFrequencies();
+
+leftOsc.start();
+rightOsc.start();
+
+audioInitialized = true;
+setupVisualization();
+
+} catch (error) {
+console.error('Audio initialization failed:', error);
+alert('Audio initialization failed. Please check browser permissions.');
+}
+}
+
+function updateFrequencies() {
+if (!audioInitialized) return;
+
+const baseFreq = parseFloat(document.getElementById('baseFreq').value);
+const beatFreq = parseFloat(document.getElementById('beatFreqSlider').value);
+
+const leftFreq = baseFreq;
+const rightFreq = baseFreq + beatFreq;
+
+// Update oscillators
+leftOsc.frequency.value = leftFreq;
+rightOsc.frequency.value = rightFreq;
+
+// Update display
+document.getElementById('leftFreq').textContent = leftFreq.toFixed(1);
+document.getElementById('rightFreq').textContent = rightFreq.toFixed(1);
+document.getElementById('beatFreq').textContent = beatFreq.toFixed(1);
+
+document.getElementById('leftFreqStat').textContent = leftFreq.toFixed(1) + ' Hz';
+document.getElementById('rightFreqStat').textContent = rightFreq.toFixed(1) + ' Hz';
+document.getElementById('beatFreqStat').textContent = beatFreq.toFixed(1) + ' Hz';
+
+updateBrainState(beatFreq);
+}
+
+function updateBrainState(beatFreq) {
+let currentState = null;
+let stateColor = '#666';
+
+for (const [key, wave] of Object.entries(brainWaves)) {
+if (beatFreq >= wave.min && beatFreq <= wave.max) {
+currentState = wave;
+stateColor = wave.color;
+break;
+}
+}
+
+const brainStateEl = document.getElementById('brainState');
+const brainStateStat = document.getElementById('brainStateStat');
+
+if (currentState) {
+brainStateEl.textContent = `${currentState.name} - ${currentState.description}`;
+brainStateEl.style.background = currentState.color + '40';
+brainStateEl.style.borderColor = currentState.color;
+brainStateStat.textContent = currentState.name.split(' ')[0];
+} else {
+brainStateEl.textContent = 'CUSTOM FREQUENCY';
+brainStateEl.style.background = 'rgba(102, 102, 102, 0.4)';
+brainStateEl.style.borderColor = '#666';
+brainStateStat.textContent = 'Custom';
+}
+}
+
+function updateVolume() {
+if (!audioInitialized) return;
+
+const volume = parseInt(document.getElementById('volume').value) / 100;
+const finalVolume = volume * 0.3; // Keep volumes reasonable
+
+leftGain.gain.value = finalVolume;
+rightGain.gain.value = finalVolume;
+}
+
+function togglePlayback() {
+if (!audioInitialized) return;
+
+isPlaying = !isPlaying;
+
+if (isPlaying) {
+updateVolume();
+if (audioCtx.state === 'suspended') audioCtx.resume();
+startSession();
+startVisualization();
+} else {
+leftGain.gain.value = 0;
+rightGain.gain.value = 0;
+stopSession();
+stopVisualization();
+}
+}
+
+function startSession() {
+sessionStartTime = Date.now();
+sessionTimer = setInterval(updateSessionTimer, 1000);
+}
+
+function stopSession() {
+if (sessionTimer) {
+clearInterval(sessionTimer);
+sessionTimer = null;
+}
+}
+
+function updateSessionTimer() {
+if (!sessionStartTime) return;
+const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+const minutes = Math.floor(elapsed / 60);
+const seconds = elapsed % 60;
+document.getElementById('sessionTime').textContent = 
+`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function setPreset(type) {
+const presets = {
+delta: { base: 100, beat: 2 },
+theta: { base: 150, beat: 6 },
+alpha: { base: 200, beat: 10 },
+beta: { base: 250, beat: 20 },
+gamma: { base: 300, beat: 35 },
+focus: { base: 200, beat: 15 }
+};
+
+if (presets[type]) {
+document.getElementById('baseFreq').value = presets[type].base;
+document.getElementById('beatFreqSlider').value = presets[type].beat;
+updateSliderDisplays();
+updateFrequencies();
+}
+}
+
+function addDrumPattern() {
+drumEnabled = !drumEnabled;
+
+if (drumEnabled && audioInitialized) {
+startDrumPattern();
+} else {
+stopDrumPattern();
+}
+}
+
+function startDrumPattern() {
+if (!audioCtx || drumInterval) return;
+
+const tempo = parseInt(document.getElementById('drumTempo').value);
+const interval = (60 / tempo) * 1000; // Convert BPM to ms
+
+drumInterval = setInterval(playDrumHit, interval);
+}
+
+function stopDrumPattern() {
+if (drumInterval) {
+clearInterval(drumInterval);
+drumInterval = null;
+}
+// Clean up drum oscillators
+drumOscs.forEach(osc => {
+try { osc.stop(); } catch(e) {}
+});
+drumOscs = [];
+drumGains = [];
+}
+
+function playDrumHit() {
+if (!audioCtx) return;
+
+const style = document.getElementById('drumStyle').value;
+const volume = parseInt(document.getElementById('drumVolume').value) / 100 * 0.4;
+
+const now = audioCtx.currentTime;
+const duration = 0.3;
+
+// Create kick drum
+const kickOsc = audioCtx.createOscillator();
+const kickGain = audioCtx.createGain();
+const kickFilter = audioCtx.createBiquadFilter();
+
+kickOsc.type = 'sine';
+kickOsc.frequency.setValueAtTime(80, now);
+kickOsc.frequency.exponentialRampToValueAtTime(30, now + 0.1);
+
+kickFilter.type = 'lowpass';
+kickFilter.frequency.value = 120;
+kickFilter.Q.value = 8;
+
+kickGain.gain.setValueAtTime(volume, now);
+kickGain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+kickOsc.connect(kickFilter);
+kickFilter.connect(kickGain);
+kickGain.connect(masterGain);
+
+kickOsc.start(now);
+kickOsc.stop(now + duration);
+
+drumOscs.push(kickOsc);
+drumGains.push(kickGain);
+}
+
+function togglePulse() {
+pulseMode = !pulseMode;
+// Could implement visual pulse effects here
+}
+
+function resetSystem() {
+// Stop everything
+if (isPlaying) togglePlayback();
+if (drumEnabled) addDrumPattern();
+
+// Reset to defaults
+document.getElementById('baseFreq').value = 200;
+document.getElementById('beatFreqSlider').value = 10;
+document.getElementById('volume').value = 50;
+document.getElementById('drumTempo').value = 90;
+document.getElementById('drumVolume').value = 30;
+
+updateSliderDisplays();
+updateFrequencies();
+
+// Reset session
+document.getElementById('sessionTime').textContent = '00:00';
+}
+
+function setupVisualization() {
+waveCanvas = document.getElementById('waveCanvas');
+waveCtx = waveCanvas.getContext('2d');
+waveCanvas.width = waveCanvas.offsetWidth;
+waveCanvas.height = waveCanvas.offsetHeight;
+}
+
+function startVisualization() {
+if (animationId) return;
+drawWaveform();
+}
+
+function stopVisualization() {
+if (animationId) {
+cancelAnimationFrame(animationId);
+animationId = null;
+}
+}
+
+function drawWaveform() {
+if (!waveCtx || !isPlaying) return;
+
+const width = waveCanvas.width;
+const height = waveCanvas.height;
+const centerY = height / 2;
+
+waveCtx.fillStyle = '#000';
+waveCtx.fillRect(0, 0, width, height);
+
+// Draw binaural beat visualization
+const time = Date.now() * 0.001;
+const leftFreq = parseFloat(document.getElementById('baseFreq').value);
+const rightFreq = leftFreq + parseFloat(document.getElementById('beatFreqSlider').value);
+
+waveCtx.strokeStyle = '#00ffff';
+waveCtx.lineWidth = 2;
+waveCtx.beginPath();
+
+for (let x = 0; x < width; x++) {
+const t = (x / width) * 4 + time;
+const leftWave = Math.sin(leftFreq * t * 0.1) * 50;
+const y = centerY + leftWave;
+if (x === 0) waveCtx.moveTo(x, y);
+else waveCtx.lineTo(x, y);
+}
+waveCtx.stroke();
+
+// Right channel
+waveCtx.strokeStyle = '#ff00ff';
+waveCtx.beginPath();
+for (let x = 0; x < width; x++) {
+const t = (x / width) * 4 + time;
+const rightWave = Math.sin(rightFreq * t * 0.1) * 50;
+const y = centerY + rightWave + 100;
+if (x === 0) waveCtx.moveTo(x, y);
+else waveCtx.lineTo(x, y);
+}
+waveCtx.stroke();
+
+// Beat frequency visualization
+const beatFreq = rightFreq - leftFreq;
+waveCtx.strokeStyle = '#ffff00';
+waveCtx.lineWidth = 3;
+waveCtx.beginPath();
+for (let x = 0; x < width; x++) {
+const t = (x / width) * 8 + time;
+const beatWave = Math.sin(beatFreq * t * 0.5) * 30;
+const y = centerY + beatWave - 100;
+if (x === 0) waveCtx.moveTo(x, y);
+else waveCtx.lineTo(x, y);
+}
+waveCtx.stroke();
+
+animationId = requestAnimationFrame(drawWaveform);
+}
+
+function updateSliderDisplays() {
+document.getElementById('baseFreqValue').textContent = document.getElementById('baseFreq').value;
+document.getElementById('beatFreqValue').textContent = document.getElementById('beatFreqSlider').value;
+document.getElementById('volumeValue').textContent = document.getElementById('volume').value;
+document.getElementById('drumTempoValue').textContent = document.getElementById('drumTempo').value;
+document.getElementById('drumVolumeValue').textContent = document.getElementById('drumVolume').value;
+}
+
+// Event listeners
+document.getElementById('baseFreq').addEventListener('input', () => {
+updateSliderDisplays();
+updateFrequencies();
+});
+
+document.getElementById('beatFreqSlider').addEventListener('input', () => {
+updateSliderDisplays();
+updateFrequencies();
+});
+
+document.getElementById('volume').addEventListener('input', () => {
+updateSliderDisplays();
+if (isPlaying) updateVolume();
+});
+
+document.getElementById('drumTempo').addEventListener('input', () => {
+updateSliderDisplays();
+if (drumEnabled) {
+stopDrumPattern();
+startDrumPattern();
+}
+});
+
+document.getElementById('drumVolume').addEventListener('input', updateSliderDisplays);
+
+// Initialize
+updateSliderDisplays();
+updateFrequencies();
+</script>
+</body>
+</html>
