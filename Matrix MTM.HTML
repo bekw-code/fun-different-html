@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>FSK Ritual Engine</title>
+  <style>
+    body {
+      background: black;
+      color: #00ff99;
+      font-family: 'Courier New', monospace;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    #container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2em;
+    }
+    #textInput {
+      width: 90%;
+      height: 200px;
+      background: rgba(0, 255, 153, 0.1);
+      border: 2px solid #00ff99;
+      color: #00ff99;
+      font-size: 1em;
+      padding: 1em;
+      resize: none;
+    }
+    #slider {
+      width: 300px;
+      margin: 2em 0;
+      accent-color: #00ff99;
+    }
+    #modeToggle {
+      background: rgba(0, 255, 153, 0.1);
+      border: 2px solid #00ff99;
+      color: #00ff99;
+      padding: 0.5em 1em;
+      margin: 1em 0;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+    }
+    #transmit {
+      background: #00ff99;
+      color: black;
+      border: none;
+      padding: 1em 2em;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: -1;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="matrixCanvas"></canvas>
+  <div id="container">
+    <textarea id="textInput" maxlength="7000" placeholder="Type your glyphic incantation..."></textarea>
+    <input type="range" id="slider" min="10" max="300" value="120" />
+    <button id="modeToggle">Mode: FSK</button>
+    <button id="transmit">Transmit</button>
+  </div>
+
+  <script>
+    // Matrix Visualizer
+    const canvas = document.getElementById('matrixCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const columns = canvas.width / 20;
+    const drops = Array(Math.floor(columns)).fill(1);
+    const chars = 'アァイィウヴエカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#00ff99';
+      ctx.font = '16px monospace';
+      for (let i = 0; i < drops.length; i++) {
+        const text = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillText(text, i * 20, drops[i] * 20);
+        drops[i]++;
+        if (drops[i] * 20 > canvas.height && Math.random() > 0.975) drops[i] = 0;
+      }
+    }
+    setInterval(drawMatrix, 50);
+
+    // Mode toggle
+    let currentMode = 0; // 0: FSK, 1: Morse, 2: Amplitude Pulse, 3: Chirp Sweep
+    const modes = ['FSK', 'Morse', 'Amplitude Pulse', 'Chirp Sweep'];
+    const modeToggle = document.getElementById('modeToggle');
+    
+    modeToggle.addEventListener('click', () => {
+      currentMode = (currentMode + 1) % modes.length;
+      modeToggle.textContent = `Mode: ${modes[currentMode]}`;
+    });
+
+    // FSK Sonic Transmission
+    const freqPalette = [400, 600, 800, 1000, 1200, 1400, 1600, 1800];
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function charToFreqSequence(char) {
+      const code = char.charCodeAt(0);
+      return [
+        freqPalette[code % freqPalette.length],
+        freqPalette[(code >> 3) % freqPalette.length],
+        freqPalette[(code >> 1) % freqPalette.length]
+      ];
+    }
+
+    // Morse code mapping
+    const morseCode = {
+      'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+      'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+      'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+      'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+      'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+      '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+      '8': '---..', '9': '----.', ' ': '/'
+    };
+
+    function transmitMorse(text, wpm) {
+      const dotDuration = 1.2 / wpm;
+      const dashDuration = dotDuration * 3;
+      const freq = 800;
+      let time = audioCtx.currentTime;
+
+      text.toUpperCase().split('').forEach(char => {
+        const morse = morseCode[char];
+        if (morse) {
+          morse.split('').forEach(symbol => {
+            if (symbol === '.') {
+              const osc = audioCtx.createOscillator();
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              const gain = audioCtx.createGain();
+              gain.gain.setValueAtTime(0.2, time);
+              osc.connect(gain).connect(audioCtx.destination);
+              osc.start(time);
+              osc.stop(time + dotDuration);
+              time += dotDuration + dotDuration;
+            } else if (symbol === '-') {
+              const osc = audioCtx.createOscillator();
+              osc.frequency.value = freq;
+              osc.type = 'sine';
+              const gain = audioCtx.createGain();
+              gain.gain.setValueAtTime(0.2, time);
+              osc.connect(gain).connect(audioCtx.destination);
+              osc.start(time);
+              osc.stop(time + dashDuration);
+              time += dashDuration + dotDuration;
+            } else if (symbol === '/') {
+              time += dotDuration * 7;
+            }
+          });
+          time += dotDuration * 2;
+        }
+      });
+    }
+
+    function transmitAmplitudePulse(text, wpm) {
+      const chars = text.split('');
+      let time = audioCtx.currentTime;
+      const baseDuration = 60 / wpm / 5;
+      const baseFreq = 1000;
+
+      chars.forEach(char => {
+        const code = char.charCodeAt(0);
+        const pulses = 3 + (code % 5); // 3-7 pulses per character
+        
+        for (let i = 0; i < pulses; i++) {
+          const osc = audioCtx.createOscillator();
+          osc.frequency.value = baseFreq;
+          osc.type = 'sine';
+          const gain = audioCtx.createGain();
+          
+          // Amplitude modulation based on character code
+          const amplitude = 0.1 + (0.3 * ((code + i) % 8) / 8);
+          gain.gain.setValueAtTime(amplitude, time);
+          
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start(time);
+          osc.stop(time + baseDuration * 0.3);
+          time += baseDuration * 0.5;
+        }
+        time += baseDuration * 0.8; // Gap between characters
+      });
+    }
+
+    function transmitChirpSweep(text, wpm) {
+      const chars = text.split('');
+      let time = audioCtx.currentTime;
+      const baseDuration = 60 / wpm / 2;
+
+      chars.forEach(char => {
+        const code = char.charCodeAt(0);
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        
+        // Chirp sweep based on character code
+        const startFreq = 200 + (code % 16) * 50;
+        const endFreq = 1800 - (code % 16) * 50;
+        
+        osc.frequency.setValueAtTime(startFreq, time);
+        osc.frequency.exponentialRampToValueAtTime(endFreq, time + baseDuration);
+        
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.15, time);
+        gain.gain.exponentialRampToValueAtTime(0.05, time + baseDuration);
+        
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(time);
+        osc.stop(time + baseDuration);
+        time += baseDuration + Math.random() * 0.02;
+      });
+    }
+
+    function transmitText(text, wpm) {
+      const chars = text.split('');
+      let time = audioCtx.currentTime;
+      const baseDuration = 60 / wpm / 3;
+
+      chars.forEach(char => {
+        const freqs = charToFreqSequence(char);
+        freqs.forEach(freq => {
+          const osc = audioCtx.createOscillator();
+          osc.frequency.value = freq;
+          osc.type = 'sine';
+          const gain = audioCtx.createGain();
+          gain.gain.setValueAtTime(0.2, time);
+          osc.connect(gain).connect(audioCtx.destination);
+          osc.start(time);
+          osc.stop(time + baseDuration);
+          time += baseDuration + Math.random() * 0.01;
+        });
+      });
+    }
+
+    document.getElementById('transmit').addEventListener('click', () => {
+      const text = document.getElementById('textInput').value;
+      const wpm = parseInt(document.getElementById('slider').value);
+      
+      switch (currentMode) {
+        case 0: // FSK
+          transmitText(text, wpm);
+          break;
+        case 1: // Morse
+          transmitMorse(text, wpm);
+          break;
+        case 2: // Amplitude Pulse
+          transmitAmplitudePulse(text, wpm);
+          break;
+        case 3: // Chirp Sweep
+          transmitChirpSweep(text, wpm);
+          break;
+      }
+    });
+  </script>
+</body>
+</html>
