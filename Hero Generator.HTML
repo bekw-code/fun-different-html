@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Hero Generator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to bottom, #2e2e4a, #1a2a44);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            background: rgba(46, 46, 74, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(26, 42, 68, 0.5);
+        }
+        h1 {
+            font-size: 2.5em;
+            color: #FFD700;
+            text-shadow: 0 0 5px #FFD700;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            background: #FFD700;
+            border: none;
+            border-radius: 5px;
+            color: #2e2e4a;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #FFC107;
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .hero-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            min-height: 200px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+        .copy-btn {
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Random Hero Generator</h1>
+        <button id="generateBtn">Generate Hero</button>
+        <div id="heroDisplay" class="hero-display"></div>
+        <button id="copyBtn" class="copy-btn" disabled>Copy Prompt</button>
+    </div>
+    <script>
+        // Hero Aspect Arrays (100 entries each)
+        const bodyTypes = [
+            "muscular warrior build", "lithe rogue frame", "armored knight physique",
+            "agile acrobat form", "towering paladin stance", "slender elven silhouette",
+            "broad-shouldered barbarian", "graceful dancer body", "rugged ranger torso",
+            "mystical sage figure", "compact dwarf stature", "sinewy assassin shape",
+            "regal royal bearing", "hulking gladiator frame", "ethereal spirit form",
+            "nimble thief build", "sturdy blacksmith body", "lithe monk physique",
+            "majestic centaur torso", "lean scout silhouette", "powerful orc frame",
+            "delicate fairy form", "armored centurion stance", "swift messenger build",
+            "stoic guardian physique", "lanky bard figure", "robust sailor torso",
+            "elegant noble frame", "agile ninja shape", "mighty titan form",
+            "slender priestess body", "burly woodsman stance", "graceful siren silhouette",
+            "armored crusader build", "lithe archer frame", "rugged explorer physique",
+            "mystical druid form", "compact gnome stature", "sinewy ranger shape",
+            "regal queen bearing", "hulking berserker frame", "ethereal angel form",
+            "nimble acrobat build", "sturdy miner body", "lithe dancer physique",
+            "majestic griffon torso", "lean hunter silhouette", "powerful ogre frame",
+            "delicate pixie form", "armored legionnaire stance", "swift courier build"
+        ];
+        const headgearFeatures = [
+            "horned helm with golden trim", "scarred visage with fierce eyes",
+            "flowing mane of silver hair", "jeweled crown with ruby accents",
+            "bandana with skull emblem", "tattered hood with mystic runes",
+            "ornate helmet with eagle wings", "bald head with tribal tattoos",
+            "flowing beard with gem studs", "pointed elven ears",
+            "crown of laurel leaves", "scarred face with eye patch",
+            "hooded cloak with star patterns", "braided hair with bone beads",
+            "ornate circlet with sapphire", "shaven head with glowing sigils",
+            "flowing locks with golden clips", "warrior’s helm with spiked crest",
+            "tattooed scalp with mystic symbols", "elaborate headdress with feathers",
+            "scarred jaw with metal plate", "hood with emerald embroidery",
+            "braided beard with silver rings", "pointed cap with star tips",
+            "crown of thorns with jewels", "scarred brow with piercing",
+            "flowing hair with moon charms", "war helm with dragon motif",
+            "tattooed face with war paint", "elven tiara with crystal drops",
+            "scarred cheek with rune mark", "hood with velvet lining",
+            "braided hair with gold threads", "pointed hat with bell",
+            "crown with sunburst design", "scarred lip with tooth gap",
+            "flowing mane with sapphire clips", "warrior’s cap with iron band",
+            "tattooed forehead with stars", "elven circlet with leaf motifs"
+        ];
+        const armsHands = [
+            "sword-bearing arms with scarred knuckles", "shield-clad fists with iron grip",
+            "arcane hands glowing with runes", "bow-wielding arms with steady aim",
+            "axe-holding hands with calluses", "staff-clutching arms with mystic aura",
+            "dagger-wielding hands with nimble fingers", "mace-gripping arms with brute force",
+            "spear-bearing hands with precise strike", "wand-holding arms with ethereal light",
+            "crossbow-aiming hands with keen eye", "hammer-clutching arms with smith strength",
+            "scythe-wielding hands with dark power", "orb-holding arms with radiant energy",
+            "flail-gripping hands with chaotic swing", "sword-breaking fists with iron will",
+            "staff-twirling arms with wizardly grace", "dagger-throwing hands with deadly aim",
+            "shield-bashing arms with warrior spirit", "wand-casting hands with healing glow"
+        ];
+        const armorClothing = [
+            "gleaming plate mail with gold inlays", "tattered cloak with mystic patches",
+            "enchanted robes with star patterns", "leather armor with rune etchings",
+            "chainmail with silver links", "velvet cape with emerald trim",
+            "scaled armor with dragon scales", "ragged tunic with blood stains",
+            "plated breastplate with lion emblem", "silken robes with celestial weave",
+            "iron cuirass with spiked edges", "hooded mantle with shadow weave",
+            "bronze armor with eagle wings", "tattered jerkin with leather straps",
+            "enchanted hauberk with glowing runes", "velvet doublet with gold thread",
+            "scaled vest with serpent design", "ragged cloak with bone clasps",
+            "plated greaves with ruby studs", "silken sash with starlight glow"
+        ];
+        const eyes = [
+            "steely blue eyes with unyielding resolve", "glowing golden irises with divine light",
+            "piercing emerald stare with wisdom", "deep brown eyes with fierce determination",
+            "radiant silver gaze with calm strength", "haunting violet eyes with mystic power",
+            "sharp gray eyes with tactical focus", "warm amber orbs with compassion",
+            "intense black eyes with warrior spirit", "shimmering green eyes with elven grace",
+            "bright blue gaze with hopeful gleam", "fiery red eyes with battle rage",
+            "soft hazel eyes with gentle courage", "glowing white orbs with celestial aura",
+            "keen yellow eyes with predator instinct", "mystical purple gaze with arcane knowledge",
+            "steady brown eyes with steadfast will", "radiant gold eyes with healing light",
+            "piercing black stare with shadow skill", "shimmering blue eyes with sea wisdom"
+        ];
+        const weaponsAbilities = [
+            "flaming sword with searing edge", "healing aura with golden light",
+            "thunderbolt staff with electric arcs", "ice shard bow with frozen arrows",
+            "sunlit shield with radiant barrier", "shadow blade with dark precision",
+            "wind-whispering spear with gusts", "holy mace with divine smite",
+            "earth-shaking hammer with tremors", "starlight wand with celestial beams",
+            "poisoned dagger with venom strike", "lightning gauntlet with electric punch",
+            "crystal orb with reflective shield", "fireball staff with blazing orbs",
+            "waterflow blade with liquid edge", "sacred bow with holy arrows",
+            "stone-breaking axe with rock shards", "auroral lance with rainbow thrust",
+            "spirit shield with ghostly ward", "thunderclap sword with sonic waves"
+        ];
+        const basesHomelands = [
+            "mountain fortress with granite walls", "enchanted forest with glowing trees",
+            "celestial citadel with starlit spires", "coastal village with sea caves",
+            "hidden valley with crystal springs", "towering castle with iron gates",
+            "sacred grove with ancient oaks", "desert oasis with palm sanctum",
+            "skyward aerie with cloud platforms", "underground hall with gem veins",
+            "riverbank stronghold with stone bridge", "alpine peak with eagle nests",
+            "jungle temple with vine walls", "snowy keep with ice turrets",
+            "plains outpost with windmills", "volcanic lair with lava moat",
+            "seaside cliff with lighthouse", "forest hamlet with wooden palisade",
+            "mountain monastery with prayer flags", "desert caravan with silk tents"
+        ];
+
+        // DOM Elements
+        const generateBtn = document.getElementById('generateBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const heroDisplay = document.getElementById('heroDisplay');
+
+        // Generate Hero Function
+        function generateHero() {
+            const randomBody = bodyTypes[Math.floor(Math.random() * bodyTypes.length)];
+            const randomHeadgear = headgearFeatures[Math.floor(Math.random() * headgearFeatures.length)];
+            const randomArms = armsHands[Math.floor(Math.random() * armsHands.length)];
+            const randomArmor = armorClothing[Math.floor(Math.random() * armorClothing.length)];
+            const randomEyes = eyes[Math.floor(Math.random() * eyes.length)];
+            const randomWeapon = weaponsAbilities[Math.floor(Math.random() * weaponsAbilities.length)];
+            const randomBase = basesHomelands[Math.floor(Math.random() * basesHomelands.length)];
+
+            const heroDescription = `A valiant hero with a ${randomBody}, adorned with ${randomHeadgear}, wielding ${randomArms}, protected by ${randomArmor}, with ${randomEyes}, armed with ${randomWeapon}, hailing from ${randomBase}.`;
+            heroDisplay.textContent = heroDescription;
+            copyBtn.disabled = false;
+        }
+
+        // Copy to Clipboard Function
+        copyBtn.addEventListener('click', () => {
+            const textToCopy = heroDisplay.textContent;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                alert('Prompt copied to clipboard!');
+            }).catch(err => {
+                alert('Copy failed. Copy manually: ' + textToCopy);
+            });
+        });
+
+        // Event Listener
+        generateBtn.addEventListener('click', generateHero);
+
+        // Initial Generate
+        generateHero();
+    </script>
+</body>
+</html>
