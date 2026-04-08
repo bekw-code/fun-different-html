@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Zalgo Text Generator</title>
+<style>
+body{font-family:Arial,sans-serif;background:#2c3e50;margin:0;padding:20px;color:#ecf0f1}
+.container{max-width:800px;margin:0 auto;background:#34495e;border-radius:15px;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,0.3)}
+h1{text-align:center;color:#e74c3c;margin-bottom:30px;text-shadow:2px 2px 4px rgba(0,0,0,0.5)}
+textarea{width:100%;padding:15px;border:2px solid #7f8c8d;border-radius:10px;font-size:16px;font-family:monospace;resize:vertical;background:#2c3e50;color:#ecf0f1}
+.input-area{margin-bottom:20px}
+.output-area{margin-top:20px}
+.controls{margin:20px 0;text-align:center}
+.intensity{margin:10px 0;text-align:center}
+button{background:#e74c3c;color:white;border:none;padding:12px 24px;border-radius:8px;font-size:16px;cursor:pointer;margin:5px}
+button:hover{background:#c0392b}
+button:disabled{background:#7f8c8d;cursor:not-allowed}
+.slider{width:200px;margin:0 10px}
+.counter{text-align:right;color:#bdc3c7;font-size:14px;margin-top:5px}
+.warning{color:#f39c12;font-weight:bold;text-align:center;margin:10px 0}
+#output{font-family:'Courier New',monospace;line-height:1.6;overflow-wrap:break-word}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Z̴͎͌A̷̰͋L̶̰̈G̷̈́͜O̸̭͐ ̶̱̈T̵̰̊E̶̺̋X̷̰̌T̵̰̄ ̶̱̈G̷̈́͜E̶̺̋N̶̰̊E̶̺̋Ř̶̰A̷̰͋T̵̰̊O̸̭͐Ř̶̰</h1>
+<div class="input-area">
+<textarea id="input" placeholder="Enter your text here..." rows="6"></textarea>
+<div id="counter" class="counter">0 characters</div>
+</div>
+<div class="intensity">
+<label>Chaos Intensity: <span id="intensityValue">3</span></label><br>
+<input type="range" id="intensitySlider" class="slider" min="1" max="10" value="3">
+</div>
+<div class="controls">
+<button onclick="zalgofy()">🔥 CORRUPT TEXT</button>
+<button onclick="copyResult()" id="copyBtn" disabled>📋 Copy Zalgo</button>
+<button onclick="clearAll()">🗑️ Clear</button>
+</div>
+<div class="warning" id="warning" style="display:none">
+⚠️ High intensity may cause rendering issues in some browsers
+</div>
+<div class="output-area">
+<textarea id="output" placeholder="Your corrupted text will manifest here..." readonly rows="8"></textarea>
+</div>
+</div>
+
+<script>
+const above = ['\u030d','\u030e','\u0304','\u0305','\u033f','\u0311','\u0306','\u0310','\u0352','\u0357','\u0351','\u0307','\u0308','\u030a','\u0342','\u0343','\u0344','\u034a','\u034b','\u034c','\u0303','\u0302','\u030c','\u0350','\u0300','\u0301','\u030b','\u030f','\u0312','\u0313','\u0314','\u033d','\u0309','\u0363','\u0364','\u0365','\u0366','\u0367','\u0368','\u0369','\u036a','\u036b','\u036c','\u036d','\u036e','\u036f','\u033e','\u035b','\u0346','\u031a'];
+
+const below = ['\u0316','\u0317','\u0318','\u0319','\u031c','\u031d','\u031e','\u031f','\u0320','\u0324','\u0325','\u0326','\u0329','\u032a','\u032b','\u032c','\u032d','\u032e','\u032f','\u0330','\u0331','\u0332','\u0333','\u0339','\u033a','\u033b','\u033c','\u0345','\u0347','\u0348','\u0349','\u034d','\u034e','\u0353','\u0354','\u0355','\u0356','\u0359','\u035a','\u0323'];
+
+const middle = ['\u0315','\u031b','\u0340','\u0341','\u0358','\u0321','\u0322','\u0327','\u0328','\u0334','\u0335','\u0336','\u034f','\u035c','\u035d','\u035e','\u035f','\u0360','\u0362','\u0338','\u0337','\u0361','\u0489'];
+
+let intensity = 3;
+
+document.getElementById('input').addEventListener('input', updateCounter);
+document.getElementById('intensitySlider').addEventListener('input', updateIntensity);
+
+function updateCounter() {
+const len = document.getElementById('input').value.length;
+document.getElementById('counter').textContent = len + ' characters';
+}
+
+function updateIntensity() {
+intensity = parseInt(document.getElementById('intensitySlider').value);
+document.getElementById('intensityValue').textContent = intensity;
+const warning = document.getElementById('warning');
+warning.style.display = intensity > 7 ? 'block' : 'none';
+}
+
+function zalgofy() {
+const text = document.getElementById('input').value;
+if (!text.trim()) {
+alert('Enter some text to corrupt!');
+return;
+}
+
+let result = '';
+for (let char of text) {
+result += char;
+
+// Add combining characters based on intensity
+const numMarks = Math.floor(Math.random() * intensity) + 1;
+for (let i = 0; i < numMarks; i++) {
+const type = Math.random();
+let marks;
+if (type < 0.4) marks = above;
+else if (type < 0.8) marks = below;
+else marks = middle;
+
+result += marks[Math.floor(Math.random() * marks.length)];
+}
+}
+
+document.getElementById('output').value = result;
+document.getElementById('copyBtn').disabled = false;
+}
+
+async function copyResult() {
+const output = document.getElementById('output').value;
+try {
+await navigator.clipboard.writeText(output);
+alert('Zalgo text copied to clipboard!');
+} catch (e) {
+document.getElementById('output').select();
+document.execCommand('copy');
+alert('Zalgo text copied!');
+}
+}
+
+function clearAll() {
+document.getElementById('input').value = '';
+document.getElementById('output').value = '';
+document.getElementById('copyBtn').disabled = true;
+updateCounter();
+}
+
+updateCounter();
+</script>
+</body>
+</html>
