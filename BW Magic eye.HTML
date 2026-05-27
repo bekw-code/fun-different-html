@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MAGIC EYE FORGE</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Share+Tech+Mono&display=swap');
+
+  :root {
+    --ink: #0a0a0a;
+    --paper: #f0ebe0;
+    --red: #c0392b;
+    --ghost: #d4cfc4;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow-x: hidden;
+  }
+
+  header {
+    width: 100%;
+    padding: 2.5rem 2rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #222;
+    position: relative;
+  }
+
+  header::before {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--red), transparent);
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 8vw, 7rem);
+    letter-spacing: 0.15em;
+    color: var(--paper);
+    line-height: 1;
+  }
+
+  h1 span { color: var(--red); }
+
+  .subtitle {
+    font-size: 0.7rem;
+    letter-spacing: 0.3em;
+    color: #555;
+    margin-top: 0.4rem;
+    text-transform: uppercase;
+  }
+
+  .workspace {
+    width: 100%;
+    max-width: 1100px;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  /* DROP ZONE */
+  .drop-zone {
+    border: 2px dashed #333;
+    border-radius: 2px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    background: #0f0f0f;
+  }
+
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--red);
+    background: #120000;
+  }
+
+  .drop-zone input[type=file] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .drop-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.4;
+  }
+
+  .drop-text {
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    color: #555;
+    text-transform: uppercase;
+  }
+
+  .drop-text strong {
+    color: var(--paper);
+    display: block;
+    font-size: 1.1rem;
+    margin-bottom: 0.3rem;
+  }
+
+  /* CONTROLS */
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    background: #0f0f0f;
+    border: 1px solid #1a1a1a;
+    padding: 1.5rem;
+  }
+
+  @media (max-width: 600px) {
+    .controls { grid-template-columns: 1fr; }
+  }
+
+  .ctrl-group label {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    color: #555;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .ctrl-group input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    height: 2px;
+    background: #2a2a2a;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .ctrl-group input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--red);
+    border-radius: 0;
+    cursor: pointer;
+  }
+
+  .ctrl-val {
+    font-size: 0.75rem;
+    color: var(--paper);
+    margin-top: 0.3rem;
+    text-align: right;
+  }
+
+  .ctrl-group select {
+    width: 100%;
+    background: #1a1a1a;
+    color: var(--paper);
+    border: 1px solid #333;
+    padding: 0.4rem 0.6rem;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 0.8rem;
+    cursor: pointer;
+    outline: none;
+  }
+
+  /* FORGE BUTTON */
+  .forge-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.3em;
+    background: var(--red);
+    color: var(--paper);
+    border: none;
+    padding: 0.8rem 3rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    align-self: center;
+  }
+
+  .forge-btn:hover { background: #e74c3c; }
+  .forge-btn:active { transform: scale(0.97); }
+  .forge-btn:disabled { background: #333; color: #555; cursor: not-allowed; }
+
+  /* CANVASES */
+  .canvas-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 700px) {
+    .canvas-row { grid-template-columns: 1fr; }
+  }
+
+  .canvas-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .canvas-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    color: #444;
+    text-transform: uppercase;
+  }
+
+  .canvas-wrap {
+    background: #080808;
+    border: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  .canvas-wrap canvas {
+    max-width: 100%;
+    display: block;
+  }
+
+  .placeholder-msg {
+    font-size: 0.7rem;
+    color: #2a2a2a;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3rem;
+    text-align: center;
+  }
+
+  /* OUTPUT FULL WIDTH */
+  .output-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .output-canvas-wrap {
+    background: #080808;
+    border: 1px solid #1a1a1a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  .output-canvas-wrap canvas {
+    max-width: 100%;
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  /* INSTRUCTIONS */
+  .instructions {
+    background: #0a0a0a;
+    border-left: 2px solid var(--red);
+    padding: 1.2rem 1.5rem;
+    font-size: 0.72rem;
+    line-height: 2;
+    color: #555;
+    letter-spacing: 0.05em;
+  }
+
+  .instructions strong { color: var(--paper); }
+
+  /* DOWNLOAD */
+  .download-btn {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.25em;
+    background: transparent;
+    color: var(--paper);
+    border: 1px solid #333;
+    padding: 0.6rem 2rem;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+    align-self: flex-start;
+    display: none;
+  }
+
+  .download-btn:hover { border-color: var(--paper); }
+
+  /* PROGRESS */
+  .progress-bar {
+    height: 2px;
+    background: #1a1a1a;
+    width: 100%;
+    display: none;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--red);
+    width: 0%;
+    transition: width 0.1s;
+  }
+
+  .status {
+    font-size: 0.65rem;
+    color: #444;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-align: center;
+    min-height: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>MAGIC <span>EYE</span> FORGE</h1>
+  <p class="subtitle">Stereopsis · Single Image Random Dot · Brain-Eye 3D</p>
+</header>
+
+<div class="workspace">
+
+  <!-- DROP ZONE -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept="image/jpeg,image/png">
+    <div class="drop-icon">⊕</div>
+    <div class="drop-text">
+      <strong>Drop JPEG or PNG here</strong>
+      or click to select
+    </div>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="ctrl-group">
+      <label>Depth Strength</label>
+      <input type="range" id="depthStrength" min="4" max="40" value="18" step="1">
+      <div class="ctrl-val" id="depthVal">18 px</div>
+    </div>
+    <div class="ctrl-group">
+      <label>Pattern Width</label>
+      <input type="range" id="patternWidth" min="60" max="200" value="120" step="5">
+      <div class="ctrl-val" id="patternVal">120 px</div>
+    </div>
+    <div class="ctrl-group">
+      <label>Depth Source</label>
+      <select id="depthMode">
+        <option value="luma">Luminance (brightness)</option>
+        <option value="red">Red channel</option>
+        <option value="invert">Inverted luma</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- FORGE -->
+  <div style="display:flex; flex-direction:column; align-items:center; gap:0.8rem;">
+    <button class="forge-btn" id="forgeBtn" disabled>FORGE</button>
+    <div class="status" id="status">Load an image to begin</div>
+    <div class="progress-bar" id="progressBar">
+      <div class="progress-bar-fill" id="progressFill"></div>
+    </div>
+  </div>
+
+  <!-- PREVIEW ROW: original + depth map -->
+  <div class="canvas-row">
+    <div class="canvas-box">
+      <span class="canvas-label">Source Image</span>
+      <div class="canvas-wrap" id="srcWrap">
+        <div class="placeholder-msg">No image loaded</div>
+      </div>
+    </div>
+    <div class="canvas-box">
+      <span class="canvas-label">Depth Map (derived)</span>
+      <div class="canvas-wrap" id="depthWrap">
+        <div class="placeholder-msg">Awaiting forge</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="output-full">
+    <span class="canvas-label">Stereogram Output — Relax your eyes, let them diverge, hold steady</span>
+    <div class="output-canvas-wrap" id="outWrap">
+      <div class="placeholder-msg">Output renders here</div>
+    </div>
+    <button class="download-btn" id="downloadBtn">⬇ Download PNG</button>
+  </div>
+
+  <!-- HOW TO SEE IT -->
+  <div class="instructions">
+    <strong>HOW TO SEE THE 3D</strong><br>
+    Hold the image close to your face. Relax your eyes as if staring through the screen at something far away.<br>
+    Slowly pull the screen back while keeping your eyes relaxed (diverged). You'll feel a "click" — the depth layer will pop forward.<br>
+    <strong>Parallel method:</strong> Let your eyes drift apart until you see three panels — focus the middle one.<br>
+    <strong>Cross-eyed method:</strong> Won't work with this type — use diverge/parallel only.<br>
+    Brighter regions in the source image will appear closer. Takes 5–60 seconds. Patience is the technique.
+  </div>
+
+</div>
+
+<canvas id="srcCanvas" style="display:none"></canvas>
+<canvas id="depthCanvas" style="display:none"></canvas>
+<canvas id="outCanvas" style="display:none"></canvas>
+
+<script>
+// ── DOM refs ──────────────────────────────────────────────────────────────────
+const fileInput    = document.getElementById('fileInput');
+const dropZone     = document.getElementById('dropZone');
+const forgeBtn     = document.getElementById('forgeBtn');
+const depthStrSlider = document.getElementById('depthStrength');
+const patternWSlider = document.getElementById('patternWidth');
+const depthModeEl  = document.getElementById('depthMode');
+const depthValEl   = document.getElementById('depthVal');
+const patternValEl = document.getElementById('patternVal');
+const statusEl     = document.getElementById('status');
+const progressBar  = document.getElementById('progressBar');
+const progressFill = document.getElementById('progressFill');
+const srcWrap      = document.getElementById('srcWrap');
+const depthWrap    = document.getElementById('depthWrap');
+const outWrap      = document.getElementById('outWrap');
+const downloadBtn  = document.getElementById('downloadBtn');
+
+const srcCanvas   = document.getElementById('srcCanvas');
+const depthCanvas = document.getElementById('depthCanvas');
+const outCanvas   = document.getElementById('outCanvas');
+const srcCtx      = srcCanvas.getContext('2d');
+const depthCtx    = depthCanvas.getContext('2d');
+const outCtx      = outCanvas.getContext('2d');
+
+let loadedImage = null;
+
+// ── Slider display ────────────────────────────────────────────────────────────
+depthStrSlider.addEventListener('input', () => {
+  depthValEl.textContent = depthStrSlider.value + ' px';
+});
+patternWSlider.addEventListener('input', () => {
+  patternValEl.textContent = patternWSlider.value + ' px';
+});
+
+// ── Drag/drop ─────────────────────────────────────────────────────────────────
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+fileInput.addEventListener('change', () => {
+  if (fileInput.files[0]) handleFile(fileInput.files[0]);
+});
+
+// ── File load ─────────────────────────────────────────────────────────────────
+function handleFile(file) {
+  if (!file.type.match(/image\/(jpeg|png)/)) {
+    setStatus('JPEG or PNG only'); return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    loadedImage = img;
+    // Render preview — cap at 600px wide for display
+    const maxW = 600;
+    const scale = Math.min(1, maxW / img.width);
+    const pw = Math.round(img.width * scale);
+    const ph = Math.round(img.height * scale);
+    srcCanvas.width = pw; srcCanvas.height = ph;
+    srcCtx.drawImage(img, 0, 0, pw, ph);
+
+    // Show in srcWrap
+    const previewC = document.createElement('canvas');
+    previewC.width = pw; previewC.height = ph;
+    previewC.getContext('2d').drawImage(img, 0, 0, pw, ph);
+    previewC.style.maxWidth = '100%';
+    srcWrap.innerHTML = '';
+    srcWrap.appendChild(previewC);
+
+    forgeBtn.disabled = false;
+    setStatus('Image loaded — hit FORGE');
+    URL.revokeObjectURL(url);
+  };
+  img.onerror = () => setStatus('Failed to load image');
+  img.src = url;
+}
+
+// ── Status helper ─────────────────────────────────────────────────────────────
+function setStatus(msg) { statusEl.textContent = msg; }
+function setProgress(p) {
+  progressBar.style.display = 'block';
+  progressFill.style.width = p + '%';
+  if (p >= 100) setTimeout(() => { progressBar.style.display = 'none'; }, 400);
+}
+
+// ── Main forge ────────────────────────────────────────────────────────────────
+forgeBtn.addEventListener('click', () => {
+  if (!loadedImage) return;
+  forgeBtn.disabled = true;
+  setStatus('Forging…');
+  setProgress(0);
+  // Small defer so UI updates before heavy work
+  setTimeout(() => forge(), 30);
+});
+
+function forge() {
+  const img = loadedImage;
+
+  // Work at reduced resolution for performance — cap width at 800
+  const maxW = 800;
+  const scale = Math.min(1, maxW / img.width);
+  const W = Math.round(img.width * scale);
+  const H = Math.round(img.height * scale);
+
+  // Draw source at work size
+  srcCanvas.width = W; srcCanvas.height = H;
+  srcCtx.drawImage(img, 0, 0, W, H);
+  const srcData = srcCtx.getImageData(0, 0, W, H).data;
+
+  setProgress(15);
+
+  // ── Build depth map ────────────────────────────────────────────────────────
+  const depthMode = depthModeEl.value;
+  const depthRaw = new Float32Array(W * H);
+
+  for (let i = 0; i < W * H; i++) {
+    const r = srcData[i*4], g = srcData[i*4+1], b = srcData[i*4+2];
+    let d;
+    if (depthMode === 'luma') {
+      d = (0.299*r + 0.587*g + 0.114*b) / 255;
+    } else if (depthMode === 'red') {
+      d = r / 255;
+    } else { // invert
+      d = 1 - (0.299*r + 0.587*g + 0.114*b) / 255;
+    }
+    depthRaw[i] = d;
+  }
+
+  // Gaussian blur depth for smoother stereogram (3x3 box blur, 3 passes)
+  const depthSmooth = boxBlurMulti(depthRaw, W, H, 3, 3);
+
+  setProgress(35);
+
+  // Show depth map
+  depthCanvas.width = W; depthCanvas.height = H;
+  const depthImgData = depthCtx.createImageData(W, H);
+  for (let i = 0; i < W * H; i++) {
+    const v = Math.round(depthSmooth[i] * 255);
+    depthImgData.data[i*4]   = v;
+    depthImgData.data[i*4+1] = v;
+    depthImgData.data[i*4+2] = v;
+    depthImgData.data[i*4+3] = 255;
+  }
+  depthCtx.putImageData(depthImgData, 0, 0);
+  const depthPreview = document.createElement('canvas');
+  depthPreview.width = W; depthPreview.height = H;
+  depthPreview.getContext('2d').putImageData(depthImgData, 0, 0);
+  depthPreview.style.maxWidth = '100%';
+  depthWrap.innerHTML = '';
+  depthWrap.appendChild(depthPreview);
+
+  setProgress(50);
+
+  // ── SIRDS Algorithm ────────────────────────────────────────────────────────
+  const E = parseInt(patternWSlider.value);   // eye separation / pattern strip width
+  const maxShift = parseInt(depthStrSlider.value); // max pixel shift for depth
+
+  // Generate random noise strip of width E
+  const noiseStrip = new Uint8ClampedArray(E * H * 4);
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < E; x++) {
+      const v = Math.random() > 0.5 ? 255 : 0;
+      // Small chance of color dots for visual interest
+      const ri = (y * E + x) * 4;
+      if (Math.random() < 0.03) {
+        noiseStrip[ri]   = Math.floor(Math.random()*256);
+        noiseStrip[ri+1] = Math.floor(Math.random()*256);
+        noiseStrip[ri+2] = Math.floor(Math.random()*256);
+      } else {
+        noiseStrip[ri] = noiseStrip[ri+1] = noiseStrip[ri+2] = v;
+      }
+      noiseStrip[ri+3] = 255;
+    }
+  }
+
+  outCanvas.width = W; outCanvas.height = H;
+  const outData = outCtx.createImageData(W, H);
+  const pixels = outData.data;
+
+  // For each row, compute stereogram using constraint propagation
+  for (let y = 0; y < H; y++) {
+    // same[x] = the x value that pixel x is linked to
+    const same = new Int32Array(W);
+    for (let x = 0; x < W; x++) same[x] = x;
+
+    // Apply depth constraints left to right
+    for (let x = 0; x < W; x++) {
+      const depth = depthSmooth[y * W + x];
+      const shift = Math.round(depth * maxShift);
+      const left  = x - Math.floor(E / 2) + Math.floor(shift / 2);
+      const right = left + E - shift;
+      if (left >= 0 && right < W) {
+        // Link left and right
+        let l = left, r = right;
+        // Walk to canonical
+        while (same[l] !== l) l = same[l];
+        while (same[r] !== r) r = same[r];
+        if (l !== r) same[Math.max(l, r)] = Math.min(l, r);
+      }
+    }
+
+    // Assign colors: walk same[] chains, seed from noise strip
+    const rowColors = new Uint8ClampedArray(W * 4);
+    for (let x = 0; x < W; x++) {
+      let s = x;
+      while (same[s] !== s) s = same[s];
+      if (s === x) {
+        // Root — pull from noise strip (wrap by E)
+        const ni = (y * E + (x % E)) * 4;
+        rowColors[x*4]   = noiseStrip[ni];
+        rowColors[x*4+1] = noiseStrip[ni+1];
+        rowColors[x*4+2] = noiseStrip[ni+2];
+        rowColors[x*4+3] = 255;
+      } else {
+        // Copy from root
+        rowColors[x*4]   = rowColors[s*4];
+        rowColors[x*4+1] = rowColors[s*4+1];
+        rowColors[x*4+2] = rowColors[s*4+2];
+        rowColors[x*4+3] = 255;
+      }
+    }
+
+    // Write row to output
+    const base = y * W * 4;
+    for (let x = 0; x < W; x++) {
+      pixels[base + x*4]   = rowColors[x*4];
+      pixels[base + x*4+1] = rowColors[x*4+1];
+      pixels[base + x*4+2] = rowColors[x*4+2];
+      pixels[base + x*4+3] = 255;
+    }
+
+    if (y % 40 === 0) setProgress(50 + Math.round((y / H) * 48));
+  }
+
+  outCtx.putImageData(outData, 0, 0);
+
+  // Show output
+  const outDisplay = document.createElement('canvas');
+  outDisplay.width = W; outDisplay.height = H;
+  outDisplay.getContext('2d').putImageData(outData, 0, 0);
+  outDisplay.style.maxWidth = '100%';
+  outDisplay.style.imageRendering = 'pixelated';
+  outWrap.innerHTML = '';
+  outWrap.appendChild(outDisplay);
+
+  setProgress(100);
+  setStatus('Forged. Relax your eyes — diverge, hold, let the depth arrive.');
+  forgeBtn.disabled = false;
+  downloadBtn.style.display = 'inline-block';
+
+  downloadBtn.onclick = () => {
+    const a = document.createElement('a');
+    a.href = outCanvas.toDataURL('image/png');
+    a.download = 'magic_eye_forge.png';
+    a.click();
+  };
+}
+
+// ── Box blur helper ───────────────────────────────────────────────────────────
+function boxBlur(src, W, H, r) {
+  const dst = new Float32Array(W * H);
+  // Horizontal pass
+  const tmp = new Float32Array(W * H);
+  for (let y = 0; y < H; y++) {
+    let sum = 0;
+    for (let x = 0; x < W; x++) {
+      sum += src[y*W+x];
+      if (x >= r) sum -= src[y*W+x-r];
+      tmp[y*W + Math.min(x, W-1)] = sum / Math.min(x+1, r);
+    }
+  }
+  // Vertical pass
+  for (let x = 0; x < W; x++) {
+    let sum = 0;
+    for (let y = 0; y < H; y++) {
+      sum += tmp[y*W+x];
+      if (y >= r) sum -= tmp[(y-r)*W+x];
+      dst[y*W+x] = sum / Math.min(y+1, r);
+    }
+  }
+  return dst;
+}
+
+function boxBlurMulti(src, W, H, r, passes) {
+  let d = src;
+  for (let i = 0; i < passes; i++) d = boxBlur(d, W, H, r);
+  return d;
+}
+</script>
+</body>
+</html>
